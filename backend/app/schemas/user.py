@@ -10,7 +10,7 @@ class UserBase(BaseModel):
     status: Optional[str] = "active"
 
 class UserCreate(UserBase):
-    pass
+    password: str
 
 class UserOut(UserBase):
     id: int
