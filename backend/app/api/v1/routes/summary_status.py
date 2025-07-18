@@ -2,8 +2,8 @@ from fastapi import APIRouter, Query, HTTPException
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from app.api.deps import get_db
-from app.db.models.payment_details import PaymentDetails
-from app.db.models.repayment_status import RepaymentStatus
+from app.models.payment_details import PaymentDetails
+from app.models.repayment_status import RepaymentStatus
 from sqlalchemy import func, text
 from datetime import datetime
 
@@ -18,7 +18,7 @@ def emi_month_to_month_year(emi_month: str):
         raise HTTPException(status_code=400, detail='Invalid emi_month format. Use e.g. Jul-25')
 
 @router.get('/summary')
-def get_collections_summary(
+def get_summary_status(
     emi_month: str = Query(..., description="EMI month in format 'Jul-25'"),
     db: Session = Depends(get_db)
 ):

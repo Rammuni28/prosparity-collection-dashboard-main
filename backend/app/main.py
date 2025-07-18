@@ -1,8 +1,8 @@
 from fastapi import FastAPI
-from app.api.v1 import user
+from app.api.v1.routes import user
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import application
-from app.api.v1 import collections
+from app.api.v1.routes import application
+from app.api.v1.routes import summary_status
 
 app = FastAPI(title="PROSPARITY API")
 
@@ -16,8 +16,7 @@ app.add_middleware(
 )
 
 app.include_router(user.router, prefix="/api/v1/users", tags=["Users"])
-app.include_router(application.router, prefix="/api/v1/application", tags=["application"])
-app.include_router(collections.router, prefix="/api/v1/collections", tags=["collections"])
+app.include_router(summary_status.router, prefix="/api/v1/summary_status", tags=["summary_status"])
 
 @app.get("/")
 def root():

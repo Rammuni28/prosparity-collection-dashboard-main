@@ -18,7 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import PendingApprovals from "@/components/PendingApprovals";
-import { getApplicationDetails, getApplicationsList } from '@/integrations/api/client';
+import { getApplicationDetails, getApplicationsList, getFilteredApplications } from '@/integrations/api/client';
 
 const PAGE_SIZE = 20;
 
@@ -97,16 +97,19 @@ const Index = () => {
   }, [user, applications.length, fetchProfiles]);
 
   useEffect(() => {
-    // Fetch the list of applications from the real API
-    getApplicationsList()
+    // Fetch the list of applications from the real API with selected EMI month
+    const emiMonthToUse = selectedEmiMonth || defaultEmiMonth || 'Jul-24';
+    setLoading(true);
+    getFilteredApplications(emiMonthToUse, debouncedSearchTerm, 0, 1000)
       .then((data) => {
-        setApplications(data);
+        setApplications(data.applications);
       })
       .catch((err) => {
+        console.error('Error fetching applications:', err);
         setApplications([]);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [selectedEmiMonth, defaultEmiMonth, debouncedSearchTerm]);
 
   const handleApplicationDeleted = () => {
     refetch();
