@@ -11,8 +11,9 @@ class LoanDetails(Base):
     disbursal_amount = Column(DECIMAL(12,2))
     approved_rate = Column(DECIMAL(12,2))
     disbursal_date = Column(DATE)
-    dollection_relationship_manager_id = Column(Integer, ForeignKey("users.id"))
-    source_relationship_manager_id = Column(Integer, ForeignKey("users.id"))
+    collection_relationship_manager_id = Column(Integer, ForeignKey("users.id"))
+    team_lead_id = Column(Integer, ForeignKey("users.id"))
+    lender_id = Column(Integer, ForeignKey("lenders.id"))
     tenure = Column(Integer)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now()) 
@@ -20,3 +21,4 @@ class LoanDetails(Base):
     # Relationships
     applicant = relationship("ApplicantDetails", back_populates="loan_details")
     payment_details = relationship("PaymentDetails", back_populates="loan_details") 
+    lender = relationship("Lender", back_populates="loan_details")

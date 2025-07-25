@@ -18,7 +18,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import PendingApprovals from "@/components/PendingApprovals";
-import { getApplicationDetails, getApplicationsList, getFilteredApplications } from '@/integrations/api/client';
+import { getApplicationDetails, getApplicationsList, getFilteredApplications, getFilterOptions, getApplicationsFromBackend, mapApiResponseToApplication } from '@/integrations/api/client';
+import { formatEmiMonth } from '@/utils/formatters';
 
 const PAGE_SIZE = 20;
 
@@ -34,21 +35,57 @@ const Index = () => {
   const [singleApp, setSingleApp] = useState<Application | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterOptions, setFilterOptions] = useState<any>(null);
 
   // Debounce search term to reduce API calls
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  // Use optimized cascading filters system
-  const { 
-    filters, 
-    availableOptions, 
-    handleFilterChange, 
-    selectedEmiMonth: selectedEmiMonthRaw,
-    handleEmiMonthChange,
-    emiMonthOptions,
-    defaultEmiMonth,
-    loading: filtersLoading 
-  } = useOptimizedCascadingFilters();
+  // Temporarily disable cascading filters to prevent supabase errors
+  // const {
+  //   availableOptions,
+  //   loading: filtersLoading,
+  //   handleFilterChange,
+  //   clearAllFilters
+  // } = useOptimizedCascadingFilters(selectedEmiMonth);
+
+  // Add basic state management for filters
+  const [filters, setFilters] = useState({
+    branch: [],
+    teamLead: [],
+    rm: [],
+    dealer: [],
+    lender: [],
+    status: [],
+    emiMonth: [],
+    repayment: [],
+    lastMonthBounce: [],
+    ptpDate: [],
+    vehicleStatus: []
+  });
+  const [selectedEmiMonthRaw, setSelectedEmiMonthRaw] = useState<string>('Aug-24');
+  const emiMonthOptions = ['Jul-24', 'Aug-24', 'Sep-24'];
+  const defaultEmiMonth = 'Aug-24';
+  
+  const handleEmiMonthChange = (month: string) => {
+    setSelectedEmiMonthRaw(month);
+  };
+
+  const availableOptions = {
+    branches: [],
+    teamLeads: [],
+    rms: [],
+    dealers: [],
+    lenders: [],
+    statuses: [],
+    emiMonths: emiMonthOptions,
+    repayments: [],
+    lastMonthBounce: [],
+    ptpDateOptions: [],
+    vehicleStatusOptions: []
+  };
+  const filtersLoading = false;
+  const handleFilterChange = () => {};
+  const clearAllFilters = () => {};
 
   // Always extract selectedEmiMonth as a single value (for mobile multi-select compatibility)
   const selectedEmiMonth = Array.isArray(filters.emiMonth) && filters.emiMonth.length > 0
@@ -97,19 +134,35 @@ const Index = () => {
   }, [user, applications.length, fetchProfiles]);
 
   useEffect(() => {
-    // Fetch the list of applications from the real API with selected EMI month
-    const emiMonthToUse = selectedEmiMonth || defaultEmiMonth || 'Jul-24';
+    getFilterOptions().then(setFilterOptions).catch(console.error);
+  }, []);
+
+  // Fetch applications when EMI month or page changes
+  useEffect(() => {
+    if (!selectedEmiMonth) {
+      setApplications([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    getFilteredApplications(emiMonthToUse, debouncedSearchTerm, 0, 1000)
+    const formattedEmiMonth = formatEmiMonth(selectedEmiMonth);
+    getApplicationsFromBackend(formattedEmiMonth, (currentPage - 1) * PAGE_SIZE, PAGE_SIZE)
       .then((data) => {
-        setApplications(data.applications);
+        setApplications((data.results || []).map(mapApiResponseToApplication));
       })
       .catch((err) => {
-        console.error('Error fetching applications:', err);
         setApplications([]);
       })
       .finally(() => setLoading(false));
-  }, [selectedEmiMonth, defaultEmiMonth, debouncedSearchTerm]);
+  }, [selectedEmiMonth, currentPage]);
+
+  // Refetch summary status when EMI month changes
+  useEffect(() => {
+    if (selectedEmiMonth) {
+      const formattedEmiMonth = formatEmiMonth(selectedEmiMonth);
+      refetchStatusCounts(formattedEmiMonth);
+    }
+  }, [selectedEmiMonth]);
 
   const handleApplicationDeleted = () => {
     refetch();
@@ -184,6 +237,19 @@ const Index = () => {
     }
   };
 
+  // Map backend filter keys to frontend keys
+  const mappedOptions = filterOptions && {
+    emiMonthOptions: filterOptions.emi_months,
+    branchOptions: filterOptions.branches,
+    dealerOptions: filterOptions.dealers,
+    lenderOptions: filterOptions.lenders,
+    statusOptions: filterOptions.statuses,
+    ptpDateOptions: filterOptions.ptpDateOptions,
+    vehicleStatusOptions: filterOptions.vehicle_statuses,
+    teamLeadOptions: filterOptions.team_leads,
+    rmOptions: filterOptions.rms,
+  };
+
   // Show loading screen while auth is loading
   if (authLoading || rolesLoading) {
     return (
@@ -211,14 +277,14 @@ const Index = () => {
 
           <FiltersSection
             filters={filters}
-            availableOptions={availableOptions}
+            availableOptions={mappedOptions || availableOptions}
             onFilterChange={handleFilterChange}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             selectedEmiMonth={selectedEmiMonth}
             onEmiMonthChange={handleEmiMonthChange}
-            emiMonthOptions={emiMonthOptions}
-            loading={filtersLoading}
+            emiMonthOptions={mappedOptions?.emiMonthOptions || emiMonthOptions}
+            loading={filtersLoading || !filterOptions}
             searchLoading={appsLoading}
             totalCount={totalCount}
           />
@@ -238,11 +304,11 @@ const Index = () => {
             onRowClick={handleApplicationSelect}
             onApplicationDeleted={handleApplicationDeleted}
             selectedApplicationId={selectedApplication?.id}
-            currentPage={1}
-            totalPages={1}
-            onPageChange={() => {}}
+            currentPage={currentPage}
+            totalPages={Math.ceil((applications.length || 1) / PAGE_SIZE)}
+            onPageChange={setCurrentPage}
             totalCount={applications.length}
-            pageSize={applications.length}
+            pageSize={PAGE_SIZE}
             selectedEmiMonth={selectedEmiMonth}
           />
         </div>

@@ -17,7 +17,7 @@ const FilterContent = ({ filters, availableOptions, onFilterChange, onClose, onC
         {/* Branch Filter */}
         <CustomMultiSelectFilter
           label="Branch"
-          options={availableOptions.branches || []}
+          options={availableOptions.branchOptions || []}
           selected={filters.branch || []}
           onSelectionChange={(values) => onFilterChange('branch', values)}
           placeholder="Select branches"
@@ -26,7 +26,7 @@ const FilterContent = ({ filters, availableOptions, onFilterChange, onClose, onC
         {/* Team Lead Filter */}
         <CustomMultiSelectFilter
           label="Team Lead"
-          options={availableOptions.teamLeads || []}
+          options={availableOptions.teamLeadOptions || []}
           selected={filters.teamLead || []}
           onSelectionChange={(values) => onFilterChange('teamLead', values)}
           placeholder="Select team leads"
@@ -35,17 +35,16 @@ const FilterContent = ({ filters, availableOptions, onFilterChange, onClose, onC
         {/* RM Filter */}
         <CustomMultiSelectFilter
           label="RM"
-          options={availableOptions.rms || []}
+          options={availableOptions.rmOptions || []}
           selected={filters.rm || []}
           onSelectionChange={(values) => onFilterChange('rm', values)}
           placeholder="Select RMs"
         />
 
-
         {/* Dealer Filter */}
         <CustomMultiSelectFilter
           label="Dealer"
-          options={availableOptions.dealers || []}
+          options={availableOptions.dealerOptions || []}
           selected={filters.dealer || []}
           onSelectionChange={(values) => onFilterChange('dealer', values)}
           placeholder="Select dealers"
@@ -54,7 +53,7 @@ const FilterContent = ({ filters, availableOptions, onFilterChange, onClose, onC
         {/* Lender Filter */}
         <CustomMultiSelectFilter
           label="Lender"
-          options={availableOptions.lenders || []}
+          options={availableOptions.lenderOptions || []}
           selected={filters.lender || []}
           onSelectionChange={(values) => onFilterChange('lender', values)}
           placeholder="Select lenders"
@@ -63,7 +62,7 @@ const FilterContent = ({ filters, availableOptions, onFilterChange, onClose, onC
         {/* Status Filter */}
         <CustomMultiSelectFilter
           label="Status"
-          options={availableOptions.statuses || []}
+          options={availableOptions.statusOptions || []}
           selected={filters.status || []}
           onSelectionChange={(values) => onFilterChange('status', values)}
           placeholder="Select status"
@@ -72,7 +71,7 @@ const FilterContent = ({ filters, availableOptions, onFilterChange, onClose, onC
         {/* Repayment Filter */}
         <CustomMultiSelectFilter
           label="Repayment"
-          options={availableOptions.repayments || []}
+          options={availableOptions.repaymentOptions || []}
           selected={filters.repayment || []}
           onSelectionChange={(values) => onFilterChange('repayment', values)}
           placeholder="Select repayment"
@@ -81,7 +80,7 @@ const FilterContent = ({ filters, availableOptions, onFilterChange, onClose, onC
         {/* Last Month Bounce Filter */}
         <CustomMultiSelectFilter
           label="Last Month Bounce"
-          options={availableOptions.lastMonthBounce || []}
+          options={availableOptions.lastMonthBounceOptions || []}
           selected={filters.lastMonthBounce || []}
           onSelectionChange={(values) => onFilterChange('lastMonthBounce', values)}
           placeholder="Select bounce status"

@@ -1,3 +1,6 @@
+import { toast } from "@/hooks/use-toast";
+import { formatEmiMonth } from '@/utils/formatters';
+
 // Updated API client for FastAPI backend
 const API_BASE_URL = "http://localhost:8000/api/v1"; // Change if backend runs elsewhere
 
@@ -24,31 +27,39 @@ interface ApiFilteredResponse {
 }
 
 // Function to map API response to frontend Application interface
-function mapApiResponseToApplication(apiItem: ApiApplicationItem): any {
+export function mapApiResponseToApplication(apiItem: ApiApplicationItem): any {
   return {
     id: apiItem.application_id,
     applicant_id: apiItem.application_id,
     applicant_name: apiItem.applicant_name,
     branch_name: apiItem.branch,
+    branch: apiItem.branch, // Add this for ApplicationRow
     team_lead: apiItem.tl_name,
+    tl_name: apiItem.tl_name, // Add this for ApplicationRow
     rm_name: apiItem.rm_name,
     dealer_name: apiItem.dealer,
+    dealer: apiItem.dealer, // Add this for ApplicationRow
     lender_name: apiItem.lender,
+    lender: apiItem.lender, // Add this for ApplicationRow
     lms_status: apiItem.status || 'Unknown',
     field_status: apiItem.status,
+    status: apiItem.status, // Add this for ApplicationRow
     emi_amount: apiItem.emi_amount,
     principle_due: 0, // Not available in new API, set default
     interest_due: 0, // Not available in new API, set default
     demand_date: apiItem.emi_month,
+    emi_month: apiItem.emi_month, // Add this for ApplicationRow
     user_id: '1', // Default value
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ptp_date: apiItem.ptp_date,
     latest_calling_status: apiItem.calling_status,
+    calling_status: apiItem.calling_status, // Add this for ApplicationRow
     recent_comments: apiItem.comments.map((comment: string) => ({
       content: comment,
       user_name: 'Unknown'
     })),
+    comments: apiItem.comments, // Add this for ApplicationRow
     // Add default values for other fields
     applicant_mobile: '',
     applicant_address: '',
@@ -120,9 +131,34 @@ export async function getApplicationsList(): Promise<any[]> {
 }
 
 export async function getCollectionsSummary(emiMonth: string) {
-  const res = await fetch(`${API_BASE_URL}/summary_status/summary?emi_month=${encodeURIComponent(emiMonth)}`);
-  if (!res.ok) throw new Error("Failed to fetch collections summary");
+  const params = new URLSearchParams();
+  // Ensure emi_month is in the correct format (Mon-YY) for backend
+  const formattedMonth = formatEmiMonth(emiMonth);
+  params.append('emi_month', formattedMonth);
+
+  const response = await fetch(`http://localhost:8000/api/v1/summary_status/summary?${params.toString()}`);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to fetch summary: ${response.status} ${errorText}`);
+  }
+  return await response.json();
+}
+
+export async function getFilterOptions() {
+  const res = await fetch("http://localhost:8000/api/v1/filters/options");
+  if (!res.ok) throw new Error("Failed to fetch filter options");
   return res.json();
+}
+
+export async function getApplicationsFromBackend(emiMonth: string, offset = 0, limit = 20) {
+  const params = new URLSearchParams();
+  if (emiMonth) params.append('emi_month', emiMonth);
+  params.append('offset', offset.toString());
+  params.append('limit', limit.toString());
+
+  const response = await fetch(`http://localhost:8000/api/v1/applications/?${params.toString()}`);
+  if (!response.ok) throw new Error('Failed to fetch applications');
+  return await response.json();
 }
 
 // Dummy export to prevent import errors in other files

@@ -17,6 +17,7 @@ class PaymentDetails(Base):
     fees = Column(DECIMAL(12,2))
     fees_status = Column(String(55))
     payment_date = Column(DATE)
+    ptp_date = Column(DATE)
     Repayment_status_id = Column(Integer, ForeignKey("repayment_status.id"))
     mode = Column(String(50))
     payment_information = Column(String(55))

@@ -27,11 +27,7 @@ const ApplicationRow = memo(({
   selectedApplicationId, 
   onRowClick,
   selectedEmiMonth,
-  batchedStatus = 'Unpaid',
-  batchedPtpDate = null,
-  batchedContactStatus,
-  batchedComments = [],
-  isLoading = false
+  // Remove batchedStatus, batchedPtpDate, batchedContactStatus, batchedComments, isLoading
 }: ApplicationRowProps) => {
   const handleRowClick = (e: React.MouseEvent) => {
     onRowClick(application);
@@ -51,12 +47,12 @@ const ApplicationRow = memo(({
         <div className="flex flex-col gap-1">
           <span className="font-bold text-blue-800">{application.applicant_name}</span>
           <span className="text-xs text-gray-700">ID: {application.applicant_id}</span>
-          <span className="text-xs text-gray-700">EMI Month: {formatEmiMonth(selectedEmiMonth ? selectedEmiMonth : application.demand_date)}</span>
-          <span className="text-xs text-gray-700">Branch: {application.branch_name}</span>
-          <span className="text-xs text-gray-700">TL: {application.team_lead}</span>
+          <span className="text-xs text-gray-700">EMI Month: {formatEmiMonth(selectedEmiMonth ? selectedEmiMonth : application.emi_month)}</span>
+          <span className="text-xs text-gray-700">Branch: {application.branch}</span>
+          <span className="text-xs text-gray-700">TL: {application.tl_name}</span>
           <span className="text-xs text-gray-700">RM: {application.rm_name}</span>
-          <span className="text-xs text-gray-700">Dealer: {application.dealer_name}</span>
-          <span className="text-xs text-gray-700">Lender: {application.lender_name}</span>
+          <span className="text-xs text-gray-700">Dealer: {application.dealer}</span>
+          <span className="text-xs text-gray-700">Lender: {application.lender}</span>
         </div>
       </TableCell>
 
@@ -67,31 +63,30 @@ const ApplicationRow = memo(({
 
       {/* Status */}
       <TableCell className="py-4 align-top w-[10%]">
-        <StatusBadge status={batchedStatus} />
+        <StatusBadge status={application.status} />
       </TableCell>
 
       {/* PTP Date */}
-      <TableCell className="py-4 align-top w-[12%]">
-        <span className={batchedPtpDate && formatPtpDate(batchedPtpDate) !== "Not Set" ? "text-blue-600 font-medium underline" : "text-gray-400"}>
-          {batchedPtpDate ? formatPtpDate(batchedPtpDate) : "Not Set"}
-        </span>
+      <TableCell className="py-4 align-top w-[10%]">
+        {application.ptp_date ? formatPtpDate(application.ptp_date) : 'Not Set'}
       </TableCell>
 
       {/* Calling Status */}
-      <TableCell className="py-4 align-top w-[14%]">
-        <CallStatusDisplay
-          application={application}
-          selectedMonth={selectedEmiMonth}
-          batchedContactStatus={batchedContactStatus}
-        />
+      <TableCell className="py-4 align-top w-[10%]">
+        {application.calling_status || 'Applicant'}
       </TableCell>
 
       {/* Recent Comments */}
       <TableCell className="py-4 align-top w-[20%]">
-        <CommentsDisplay
-          comments={batchedComments}
-          hasComments={batchedComments.length > 0}
-        />
+        {application.comments && application.comments.length > 0 ? (
+          <ul className="list-disc pl-4">
+            {application.comments.map((comment: string, idx: number) => (
+              <li key={idx} className="text-xs text-gray-700">{comment}</li>
+            ))}
+          </ul>
+        ) : (
+          <span className="text-xs text-gray-400">Click to add comments</span>
+        )}
       </TableCell>
     </TableRow>
   );
