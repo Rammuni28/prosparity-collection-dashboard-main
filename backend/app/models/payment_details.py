@@ -4,8 +4,8 @@ from app.db.base import Base
 
 class PaymentDetails(Base):
     __tablename__ = "payment_details"
-    id = Column(Integer, primary_key=True, index=True)
-    loan_application_id = Column(Integer, ForeignKey("loan_details.loan_application_id"))
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    loan_application_id = Column(Integer)
     demand_amount = Column(DECIMAL(12,2))
     principal_amount = Column(DECIMAL(12,2))
     interest = Column(DECIMAL(12,2))
@@ -18,7 +18,7 @@ class PaymentDetails(Base):
     fees_status = Column(String(55))
     payment_date = Column(DATE)
     ptp_date = Column(DATE)
-    Repayment_status_id = Column(Integer, ForeignKey("repayment_status.id"))
+    Repayment_status_id = Column(Integer)
     mode = Column(String(50))
     payment_information = Column(String(55))
     created_at = Column(TIMESTAMP, server_default=func.now())
