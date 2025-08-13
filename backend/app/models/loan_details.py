@@ -19,6 +19,9 @@ class LoanDetails(Base):
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now()) 
 
     # Relationships
-    applicant = relationship("ApplicantDetails", back_populates="loan_details")
+    applicant = relationship("ApplicantDetails", 
+                          back_populates="loan_details",
+                          primaryjoin="LoanDetails.applicant_id == ApplicantDetails.applicant_id",
+                          foreign_keys="[LoanDetails.applicant_id]")
     payment_details = relationship("PaymentDetails", back_populates="loan_details") 
     lender = relationship("Lender", back_populates="loan_details")

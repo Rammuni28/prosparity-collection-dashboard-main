@@ -62,7 +62,7 @@ def get_filtered_applications(db: Session, emi_month: str = "", offset: int = 0,
         .join(RM, LoanDetails.collection_relationship_manager_id == RM.id)
         .join(TL, LoanDetails.team_lead_id == TL.id)
         .join(RepaymentStatus, PaymentDetails.Repayment_status_id == RepaymentStatus.id)
-        .order_by(PaymentDetails.demand_date.desc())
+    .order_by(PaymentDetails.demand_date.desc())
     )
 
     if emi_month:
