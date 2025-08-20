@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, Integer, Text, TIMESTAMP, ForeignKey, func
 from sqlalchemy.orm import relationship
 from app.db.base import Base
-
+#NEW MODELS WITHOUT FOREIGN KEYS
 class ApplicantDetails(Base):
     __tablename__ = "applicant_details"
     id = Column(Integer, primary_key=True, autoincrement=True)
