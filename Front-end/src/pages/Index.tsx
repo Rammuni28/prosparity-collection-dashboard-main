@@ -1,12 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useSimpleApplications } from "@/hooks/useSimpleApplications";
-import { useOptimizedCascadingFilters } from "@/hooks/useOptimizedCascadingFilters";
-import { useStatusCounts } from "@/hooks/useStatusCounts";
-import { useEnhancedExport } from "@/hooks/useEnhancedExport";
-import { useUserProfiles } from "@/hooks/useUserProfiles";
-import { useUserRoles } from "@/hooks/useUserRoles";
-import { useDebounce } from "@/hooks/useDebounce";
-import { Application } from "@/types/application";
+import { Application, generateMockApplications, mockFilterOptions, delay } from '@/services/mockData';
 import ApplicationDetailsPanel from "@/components/ApplicationDetailsPanel";
 import AppHeader from "@/components/layout/AppHeader";
 import FiltersSection from "@/components/layout/FiltersSection";
@@ -14,39 +7,16 @@ import MainContent from "@/components/layout/MainContent";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import StatusCards from "@/components/StatusCards";
 import { ApplicationTableSkeleton, StatusCardsSkeleton } from "@/components/LoadingStates";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import PendingApprovals from "@/components/PendingApprovals";
-import { getApplicationDetails, getApplicationsList, getFilteredApplications, getFilterOptions, getApplicationsFromBackend, mapApiResponseToApplication } from '@/integrations/api/client';
-import { formatEmiMonth } from '@/utils/formatters';
 
 const PAGE_SIZE = 20;
 
 const Index = () => {
-  const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
-  const { isAdmin, loading: rolesLoading } = useUserRoles();
-  const { fetchProfiles } = useUserProfiles();
-  
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
-  const [singleApp, setSingleApp] = useState<Application | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterOptions, setFilterOptions] = useState<any>(null);
-
-  // Debounce search term to reduce API calls
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
-
-  // Temporarily disable cascading filters to prevent supabase errors
-  // const {
-  //   availableOptions,
-  //   loading: filtersLoading,
-  //   handleFilterChange,
-  //   clearAllFilters
-  // } = useOptimizedCascadingFilters(selectedEmiMonth);
 
   // Add basic state management for filters
   const [filters, setFilters] = useState({
@@ -64,121 +34,136 @@ const Index = () => {
   });
   const [selectedEmiMonthRaw, setSelectedEmiMonthRaw] = useState<string>('Aug-24');
   const emiMonthOptions = ['Jul-24', 'Aug-24', 'Sep-24'];
-  const defaultEmiMonth = 'Aug-24';
   
   const handleEmiMonthChange = (month: string) => {
     setSelectedEmiMonthRaw(month);
   };
 
   const availableOptions = {
-    branches: [],
-    teamLeads: [],
-    rms: [],
-    dealers: [],
-    lenders: [],
-    statuses: [],
+    branches: mockFilterOptions.branches,
+    teamLeads: mockFilterOptions.teamLeads,
+    rms: mockFilterOptions.rms,
+    dealers: mockFilterOptions.dealers,
+    lenders: mockFilterOptions.lenders,
+    statuses: mockFilterOptions.statuses,
     emiMonths: emiMonthOptions,
-    repayments: [],
-    lastMonthBounce: [],
-    ptpDateOptions: [],
-    vehicleStatusOptions: []
+    repayments: ['Yes', 'No'],
+    lastMonthBounce: ['Yes', 'No'],
+    ptpDateOptions: ['This Week', 'Next Week', 'This Month'],
+    vehicleStatusOptions: ['Available', 'Not Available']
   };
   const filtersLoading = false;
-  const handleFilterChange = () => {};
-  const clearAllFilters = () => {};
+  
+  const handleFilterChange = (key: string, values: string[]) => {
+    setFilters(prev => ({ ...prev, [key]: values }));
+  };
+  
+  const clearAllFilters = () => {
+    setFilters({
+      branch: [],
+      teamLead: [],
+      rm: [],
+      dealer: [],
+      lender: [],
+      status: [],
+      emiMonth: [],
+      repayment: [],
+      lastMonthBounce: [],
+      ptpDate: [],
+      vehicleStatus: []
+    });
+  };
 
   // Always extract selectedEmiMonth as a single value (for mobile multi-select compatibility)
   const selectedEmiMonth = Array.isArray(filters.emiMonth) && filters.emiMonth.length > 0
     ? filters.emiMonth[0]
     : selectedEmiMonthRaw || null;
 
-  // Use simplified applications hook
-  const { 
-    applications: appsFromHook, 
-    totalCount, 
-    totalPages, 
-    loading: appsLoading, 
-    refetch 
-  } = useSimpleApplications({
-    filters,
-    searchTerm: debouncedSearchTerm,
-    page: currentPage,
-    pageSize: PAGE_SIZE,
-    selectedEmiMonth
-  });
-
-  // Use status counts hook with search term
-  const { statusCounts, loading: statusLoading, refetch: refetchStatusCounts } = useStatusCounts({ 
-    filters, 
-    selectedEmiMonth,
-    searchTerm: debouncedSearchTerm
-  });
-
-  const { exportPtpCommentsReport, exportFullReport, exportPlanVsAchievementReport, planVsAchievementLoading } = useEnhancedExport();
-
   // Reset page when search term or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearchTerm, filters, selectedEmiMonth]);
-
-  // Load user profiles
-  useEffect(() => {
-    if (user && applications.length > 0) {
-      const timeout = setTimeout(() => {
-        const userIds = [...new Set([user.id])];
-        fetchProfiles(userIds);
-      }, 500);
-      
-      return () => clearTimeout(timeout);
-    }
-  }, [user, applications.length, fetchProfiles]);
+  }, [searchTerm, filters, selectedEmiMonth]);
 
   useEffect(() => {
-    getFilterOptions().then(setFilterOptions).catch(console.error);
+    const loadData = async () => {
+      setLoading(true);
+      await delay(1000); // Simulate loading
+      const data = generateMockApplications();
+      setApplications(data);
+      setLoading(false);
+    };
+    
+    loadData();
   }, []);
 
-  // Fetch applications when EMI month or page changes
+  // Apply filters and search
   useEffect(() => {
-    if (!selectedEmiMonth) {
-      setApplications([]);
-      setLoading(false);
-      return;
+    let filtered = applications;
+    
+    // Apply search
+    if (searchTerm) {
+      filtered = filtered.filter(app => 
+        app.applicant_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.branch_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.rm_name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
-    setLoading(true);
-    const formattedEmiMonth = formatEmiMonth(selectedEmiMonth);
-    getApplicationsFromBackend(formattedEmiMonth, (currentPage - 1) * PAGE_SIZE, PAGE_SIZE)
-      .then((data) => {
-        setApplications((data.results || []).map(mapApiResponseToApplication));
-      })
-      .catch((err) => {
-        setApplications([]);
-      })
-      .finally(() => setLoading(false));
-  }, [selectedEmiMonth, currentPage]);
+    
+    // Apply filters
+    if (filters.branch.length > 0) {
+      filtered = filtered.filter(app => filters.branch.includes(app.branch_name));
+    }
+    if (filters.teamLead.length > 0) {
+      filtered = filtered.filter(app => filters.teamLead.includes(app.team_lead));
+    }
+    if (filters.rm.length > 0) {
+      filtered = filtered.filter(app => filters.rm.includes(app.rm_name));
+    }
+    if (filters.dealer.length > 0) {
+      filtered = filtered.filter(app => filters.dealer.includes(app.dealer_name));
+    }
+    if (filters.lender.length > 0) {
+      filtered = filtered.filter(app => filters.lender.includes(app.lender_name));
+    }
+    if (filters.status.length > 0) {
+      filtered = filtered.filter(app => filters.status.includes(app.status));
+    }
+    
+    // Update filtered applications for display
+    setFilteredApplications(filtered);
+  }, [applications, filters, searchTerm]);
 
-  // Refetch summary status when EMI month changes
-  useEffect(() => {
-    if (selectedEmiMonth) {
-      const formattedEmiMonth = formatEmiMonth(selectedEmiMonth);
-      refetchStatusCounts(formattedEmiMonth);
-    }
-  }, [selectedEmiMonth]);
+  const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
 
   const handleApplicationDeleted = () => {
-    refetch();
+    // Refetch data
+    const loadData = async () => {
+      const data = generateMockApplications();
+      setApplications(data);
+    };
+    loadData();
     setSelectedApplication(null);
   };
 
   const handleApplicationUpdated = (updatedApp: Application) => {
     setSelectedApplication(updatedApp);
-    refetch();
+    // Refetch data
+    const loadData = async () => {
+      const data = generateMockApplications();
+      setApplications(data);
+    };
+    loadData();
   };
 
   const handleDataChanged = async () => {
-    await refetch();
-    await refetchStatusCounts();
+    // Refetch data
+    const loadData = async () => {
+      const data = generateMockApplications();
+      setApplications(data);
+    };
+    await loadData();
     if (selectedApplication) {
-      const updatedApp = applications.find(app => app.applicant_id === selectedApplication.applicant_id);
+      const updatedApp = applications.find(app => app.id === selectedApplication.id);
       if (updatedApp) {
         setSelectedApplication(updatedApp);
       }
@@ -195,74 +180,81 @@ const Index = () => {
 
   const handleExportFull = async () => {
     try {
-      toast.loading('Preparing full report...', { id: 'export' });
+      console.log('Preparing full report...');
       
       const exportData = {
-        applications: applications
+        applications: filteredApplications
       };
 
-      exportFullReport(exportData, 'collection-monitoring-full-report');
-      toast.success('Full report exported successfully!', { id: 'export' });
+      // Simulate export
+      await delay(1000);
+      console.log('Full report exported successfully!');
+      alert('Full report exported successfully!');
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Failed to export data', { id: 'export' });
+      alert('Failed to export data');
     }
   };
 
   const handleExportPtpComments = async () => {
     try {
-      toast.loading('Preparing PTP + Comments report...', { id: 'export' });
+      console.log('Preparing PTP + Comments report...');
       
       const exportData = {
-        applications: applications
+        applications: filteredApplications
       };
 
-      exportPtpCommentsReport(exportData, 'collection-ptp-comments-report');
-      toast.success('PTP + Comments report exported successfully!', { id: 'export' });
+      // Simulate export
+      await delay(1000);
+      console.log('PTP + Comments report exported successfully!');
+      alert('PTP + Comments report exported successfully!');
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Failed to export data', { id: 'export' });
+      alert('Failed to export data');
     }
   };
 
   const handleExportPlanVsAchievement = async (plannedDateTime: Date) => {
     try {
-      toast.loading('Preparing Plan vs Achievement report...', { id: 'export-plan' });
+      console.log('Preparing Plan vs Achievement report...');
       
-      const count = await exportPlanVsAchievementReport(plannedDateTime, 'plan-vs-achievement-report');
-      toast.success(`Plan vs Achievement report exported successfully! Found ${count} applications.`, { id: 'export-plan' });
+      // Simulate export
+      await delay(1000);
+      console.log(`Plan vs Achievement report exported successfully! Found ${filteredApplications.length} applications.`);
+      alert(`Plan vs Achievement report exported successfully! Found ${filteredApplications.length} applications.`);
     } catch (error) {
       console.error('Plan vs Achievement export error:', error);
-      toast.error('Failed to export Plan vs Achievement data', { id: 'export-plan' });
+      alert('Failed to export Plan vs Achievement data');
     }
   };
 
-  // Map backend filter keys to frontend keys
-  const mappedOptions = filterOptions && {
-    emiMonthOptions: filterOptions.emi_months,
-    branchOptions: filterOptions.branches,
-    dealerOptions: filterOptions.dealers,
-    lenderOptions: filterOptions.lenders,
-    statusOptions: filterOptions.statuses,
-    ptpDateOptions: filterOptions.ptpDateOptions,
-    vehicleStatusOptions: filterOptions.vehicle_statuses,
-    teamLeadOptions: filterOptions.team_leads,
-    rmOptions: filterOptions.rms,
-  };
+  // Calculate status counts for status cards
+  const statusCounts = useMemo(() => {
+    const total = filteredApplications.length;
+    const statusUnpaid = filteredApplications.filter(app => app.status === 'Unpaid').length;
+    const statusPartiallyPaid = filteredApplications.filter(app => app.status === 'Partially Paid').length;
+    const statusCashCollected = filteredApplications.filter(app => app.status === 'Cash Collected').length;
+    const statusCustomerDeposited = filteredApplications.filter(app => app.status === 'Customer Deposited').length;
+    const statusPaid = filteredApplications.filter(app => app.status === 'Paid').length;
+    const statusPendingApproval = 0; // Mock data doesn't have this
 
-  // Show loading screen while auth is loading
-  if (authLoading || rolesLoading) {
+    return {
+      total,
+      statusUnpaid,
+      statusPartiallyPaid,
+      statusCashCollected,
+      statusCustomerDeposited,
+      statusPaid,
+      statusPendingApproval
+    };
+  }, [filteredApplications]);
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
-  }
-
-  // Redirect to auth if not authenticated
-  if (!user) {
-    navigate('/auth');
-    return null;
   }
 
   return (
@@ -277,37 +269,30 @@ const Index = () => {
 
           <FiltersSection
             filters={filters}
-            availableOptions={mappedOptions || availableOptions}
+            availableOptions={availableOptions}
             onFilterChange={handleFilterChange}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
             selectedEmiMonth={selectedEmiMonth}
             onEmiMonthChange={handleEmiMonthChange}
-            emiMonthOptions={mappedOptions?.emiMonthOptions || emiMonthOptions}
-            loading={filtersLoading || !filterOptions}
-            searchLoading={appsLoading}
-            totalCount={totalCount}
+            emiMonthOptions={emiMonthOptions}
+            loading={filtersLoading}
+            searchLoading={loading}
+            totalCount={filteredApplications.length}
           />
 
-          {statusLoading ? (
-            <StatusCardsSkeleton />
-          ) : (
-            <StatusCards statusCounts={statusCounts} />
-          )}
+          <StatusCards statusCounts={statusCounts} />
 
-          {/* Only show Pending Approvals for Admin users */}
-          {isAdmin && <PendingApprovals onUpdate={refetch} />}
-
-          {/* Main Table - show the applications list from API */}
+          {/* Main Table - show the applications list */}
           <MainContent
-            applications={applications}
+            applications={filteredApplications}
             onRowClick={handleApplicationSelect}
             onApplicationDeleted={handleApplicationDeleted}
             selectedApplicationId={selectedApplication?.id}
             currentPage={currentPage}
-            totalPages={Math.ceil((applications.length || 1) / PAGE_SIZE)}
+            totalPages={Math.ceil((filteredApplications.length || 1) / PAGE_SIZE)}
             onPageChange={setCurrentPage}
-            totalCount={applications.length}
+            totalCount={filteredApplications.length}
             pageSize={PAGE_SIZE}
             selectedEmiMonth={selectedEmiMonth}
           />

@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, Text, TIMESTAMP, ForeignKey, func
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class Comments(Base):
@@ -9,4 +10,7 @@ class Comments(Base):
     comment = Column(Text)
     commented_at = Column(TIMESTAMP)
     created_at = Column(TIMESTAMP, server_default=func.now())
-    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now()) 
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    user = relationship("User", back_populates="comments") 

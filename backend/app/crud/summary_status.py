@@ -14,10 +14,10 @@ def emi_month_to_month_year(emi_month: str):
 def get_summary_status(db: Session, emi_month: str) -> dict:
     month, year = emi_month_to_month_year(emi_month)
     results = (
-        db.query(PaymentDetails.Repayment_status_id, func.count(PaymentDetails.id))
+        db.query(PaymentDetails.repayment_status_id, func.count(PaymentDetails.id))
         .filter(PaymentDetails.demand_month == month)
         .filter(PaymentDetails.demand_year == year)
-        .group_by(PaymentDetails.Repayment_status_id)
+        .group_by(PaymentDetails.repayment_status_id)
         .all()
     )
     status_lookup = {}
@@ -27,8 +27,8 @@ def get_summary_status(db: Session, emi_month: str) -> dict:
         'Paid': 'paid',
         'Partially Paid': 'partially_paid',
         'Future': 'unpaid',
-        'overdue': 'unpaid',
-        'foreclose': 'foreclose',
+        'Overdue': 'unpaid',
+        'Foreclose': 'foreclose',
     }
     summary = {
         'total': 0,

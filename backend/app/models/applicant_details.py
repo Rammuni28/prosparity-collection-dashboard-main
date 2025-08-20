@@ -4,7 +4,8 @@ from app.db.base import Base
 
 class ApplicantDetails(Base):
     __tablename__ = "applicant_details"
-    applicant_id = Column(String(100), primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    applicant_id = Column(String(100), unique=True, index=True)
     first_name = Column(String(100))
     middle_name = Column(String(100))
     last_name = Column(String(100))
@@ -15,17 +16,15 @@ class ApplicantDetails(Base):
     city = Column(Text)
     state = Column(Text)
     pincode = Column(Integer)
-    ownership_type_id = Column(Integer)
-    branch_id = Column(Integer)
-    dealer_id = Column(Integer)
-    fi_location = Column(Text)
+    ownership_type_id = Column(Integer, ForeignKey("ownership_type.id"))
+    branch_id = Column(Integer, ForeignKey("branch.id"))
+    dealer_id = Column(Integer, ForeignKey("dealer.id"))
+    fi_loaction = Column(Text)  # Fixed to match database column name
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
-    # Relationships
-    loan_details = relationship("LoanDetails", 
-                             back_populates="applicant",
-                             primaryjoin="ApplicantDetails.applicant_id == LoanDetails.applicant_id")
-    branch = relationship("Branch")
-    dealer = relationship("Dealer")
-    ownership_type = relationship("OwnershipType") 
+    # Relationships - now properly defined with foreign keys
+    ownership_type = relationship("OwnershipType", back_populates="applicants")
+    branch = relationship("Branch", back_populates="applicants")
+    dealer = relationship("Dealer", back_populates="applicants")
+    loan_details = relationship("LoanDetails", back_populates="applicant") 

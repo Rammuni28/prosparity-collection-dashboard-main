@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, Text, TIMESTAMP, ForeignKey, func
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class Calling(Base):
@@ -9,4 +10,8 @@ class Calling(Base):
     status_id = Column(Integer, ForeignKey("repayment_status.id"))
     call_date = Column(TIMESTAMP)
     created_at = Column(TIMESTAMP, server_default=func.now())
-    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now()) 
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    caller = relationship("User", back_populates="calls")
+    status = relationship("RepaymentStatus", back_populates="calls") 

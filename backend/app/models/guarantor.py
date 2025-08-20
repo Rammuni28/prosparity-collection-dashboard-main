@@ -3,7 +3,7 @@ from app.db.base import Base
 
 class Guarantor(Base):
     __tablename__ = "guarantor"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     loan_application_id = Column(Integer, ForeignKey("loan_details.loan_application_id"))
     first_name = Column(String(55))
     middle_name = Column(String(55))

@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Text, TIMESTAMP, func
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class Branch(Base):
@@ -8,4 +9,7 @@ class Branch(Base):
     address = Column(Text)
     region = Column(String(100))
     state = Column(String(100))
-    created_at = Column(TIMESTAMP, server_default=func.now()) 
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    
+    # Relationships
+    applicants = relationship("ApplicantDetails", back_populates="branch") 

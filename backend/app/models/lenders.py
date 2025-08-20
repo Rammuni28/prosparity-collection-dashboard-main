@@ -11,5 +11,5 @@ class Lender(Base):
     Grievance_officer_name = Column(String(100))
     created_at = Column(TIMESTAMP, server_default=func.now())
 
-
+    # Relationships - now properly defined with foreign keys
     loan_details = relationship("LoanDetails", back_populates="lender") 

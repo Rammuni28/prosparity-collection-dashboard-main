@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Enum, TIMESTAMP, func
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 import enum
 
@@ -16,4 +17,8 @@ class User(Base):
     role = Column(String(50))
     status = Column(Enum(UserStatus), default=UserStatus.active)
     created_at = Column(TIMESTAMP, server_default=func.now())
-    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now()) 
+    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    calls = relationship("Calling", back_populates="caller")
+    comments = relationship("Comments", back_populates="user") 
