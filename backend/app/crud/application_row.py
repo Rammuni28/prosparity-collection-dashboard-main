@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, aliased
-from sqlalchemy import desc, func
+from sqlalchemy import desc, func, or_
 from app.models.loan_details import LoanDetails
 from app.models.applicant_details import ApplicantDetails
 from app.models.payment_details import PaymentDetails
@@ -9,11 +9,22 @@ from app.models.lenders import Lender
 from app.models.comments import Comments
 from app.models.user import User
 from app.models.repayment_status import RepaymentStatus
+from datetime import date, timedelta
 
-
-def get_filtered_applications(db: Session, emi_month: str = "", offset: int = 0, limit: int = 20):
-
-
+def get_filtered_applications(
+    db: Session, 
+    emi_month: str = "", 
+    search: str = "",
+    branch: str = "",
+    dealer: str = "",
+    lender: str = "",
+    status: str = "",
+    rm_name: str = "",
+    tl_name: str = "",
+    ptp_date_filter: str = "",
+    offset: int = 0, 
+    limit: int = 20
+):
     RM = aliased(User)
     TL = aliased(User)
 
@@ -24,10 +35,7 @@ def get_filtered_applications(db: Session, emi_month: str = "", offset: int = 0,
         )
         .group_by(PaymentDetails.loan_application_id)
         .subquery()
-
     )
-    
-
 
     query = (
         db.query(
@@ -44,7 +52,7 @@ def get_filtered_applications(db: Session, emi_month: str = "", offset: int = 0,
             Lender.name.label("lender"),
             PaymentDetails.ptp_date.label("ptp_date"),
             PaymentDetails.mode.label("calling_status"),
-            PaymentDetails.id.label("payment_id"),  
+            PaymentDetails.id.label("payment_id")
         )
         .join(ApplicantDetails, LoanDetails.applicant_id == ApplicantDetails.applicant_id)
         .join(
@@ -62,12 +70,55 @@ def get_filtered_applications(db: Session, emi_month: str = "", offset: int = 0,
         .join(RM, LoanDetails.Collection_relationship_manager_id == RM.id)
         .join(TL, LoanDetails.source_relationship_manager_id == TL.id)
         .join(RepaymentStatus, PaymentDetails.repayment_status_id == RepaymentStatus.id)
-    .order_by(PaymentDetails.demand_date.desc())
     )
 
+    # Apply essential filters only
     if emi_month:
         query = query.filter(func.date_format(PaymentDetails.demand_date, '%b-%y') == emi_month)
+    
+    if search:
+        search_filter = or_(
+            func.concat(ApplicantDetails.first_name, ' ', ApplicantDetails.last_name).ilike(f'%{search}%'),
+            ApplicantDetails.first_name.ilike(f'%{search}%'),
+            ApplicantDetails.last_name.ilike(f'%{search}%'),
+            LoanDetails.loan_application_id.ilike(f'%{search}%')
+        )
+        query = query.filter(search_filter)
+    
+    if branch:
+        query = query.filter(Branch.name == branch)
+    
+    if dealer:
+        query = query.filter(Dealer.name == dealer)
+    
+    if lender:
+        query = query.filter(Lender.name == lender)
+    
+    if status:
+        query = query.filter(RepaymentStatus.repayment_status == status)
+    
+    if rm_name:
+        query = query.filter(RM.name == rm_name)
+    
+    if tl_name:
+        query = query.filter(TL.name == tl_name)
+    
+    # PTP date filtering
+    if ptp_date_filter:
+        today = date.today()
+        tomorrow = today + timedelta(days=1)
         
+        if ptp_date_filter == "overdue":
+            query = query.filter(PaymentDetails.ptp_date < today)
+        elif ptp_date_filter == "today":
+            query = query.filter(func.date(PaymentDetails.ptp_date) == today)
+        elif ptp_date_filter == "tomorrow":
+            query = query.filter(func.date(PaymentDetails.ptp_date) == tomorrow)
+        elif ptp_date_filter == "future":
+            query = query.filter(PaymentDetails.ptp_date > tomorrow)
+        elif ptp_date_filter == "no_ptp":
+            query = query.filter(PaymentDetails.ptp_date.is_(None))
+    
     total = query.count()
     results = []
 
