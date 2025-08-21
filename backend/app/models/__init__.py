@@ -9,7 +9,8 @@ from .repayment_status import RepaymentStatus
 from .user import User
 from .comments import Comments
 from .calling import Calling
-from .calling_status import CallingStatus
+from .contact_calling import ContactCalling
+from .demand_calling import DemandCalling
 from .co_applicant import CoApplicant
 from .guarantor import Guarantor
 from .applicant_references import ApplicantReferences
