@@ -57,8 +57,8 @@ def filter_options(db: Session):
     lenders = [l.name for l in db.query(Lender).all()]
     statuses = [r.repayment_status for r in db.query(RepaymentStatus).all()]
     vehicle_statuses = [v.vehicle_status for v in db.query(VehicleStatus).all()]
-    team_leads = [u.name for u in db.query(User).filter(User.role == "Team Lead")]
-    rms = [u.name for u in db.query(User).filter(User.role == "Relationship Manager")]
+    team_leads = [u.name for u in db.query(User).filter(User.role == "TL")]
+    rms = [u.name for u in db.query(User).filter(User.role == "RM")]
 
 
 
