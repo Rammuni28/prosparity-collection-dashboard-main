@@ -14,12 +14,10 @@ from datetime import date
 
 router = APIRouter()
 
-@router.put("/{application_id}", response_model=StatusManagementResponse)
+@router.put("/{loan_id}", response_model=StatusManagementResponse)
 def update_application_status(
-    application_id: str,
+    loan_id: str,
     status_update: StatusManagementUpdate,
-    demand_date: str = Query(..., description="Demand date in YYYY-MM-DD format"),
-    user_id: int = Query(1, description="User ID who is updating (temporary)"),
     db: Session = Depends(get_db)
 ):
     """
@@ -35,45 +33,49 @@ def update_application_status(
     Only the fields provided will be updated.
     """
     try:
-        # Parse demand date
-        parsed_demand_date = date.fromisoformat(demand_date)
-        
         # Update status management
         result = update_status_management(
             db=db,
-            application_id=application_id,
-            demand_date=parsed_demand_date,
-            status_data=status_update,
-            user_id=user_id
+            loan_id=loan_id,
+            status_data=status_update
         )
         
         return result
         
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid data: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to update status: {str(e)}")
 
-@router.get("/{application_id}")
+@router.get("/{loan_id}")
 def get_application_status(
-    application_id: str,
+    loan_id: str,
     demand_date: str = Query(..., description="Demand date in YYYY-MM-DD format"),
     db: Session = Depends(get_db)
 ):
     """Get current status for an application"""
     try:
+        # Convert loan_id to integer
+        try:
+            loan_id_int = int(loan_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid loan_id: {loan_id}. Must be a valid integer.")
+        
         parsed_demand_date = date.fromisoformat(demand_date)
         
         # Get payment details
         payment_details = db.query(PaymentDetails).filter(
             and_(
-                PaymentDetails.loan_application_id == application_id,
+                PaymentDetails.loan_application_id == loan_id_int,
                 PaymentDetails.demand_date == parsed_demand_date
             )
         ).first()
         
         if not payment_details:
-            raise HTTPException(status_code=404, detail="Payment details not found")
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Payment details not found for loan_id: {loan_id_int} and demand_date: {demand_date}"
+            )
         
         # Get repayment status name
         repayment_status_name = None
@@ -117,7 +119,7 @@ def get_application_status(
                 contact_calling_status = contact_calling_record.contact_calling_status
         
         return {
-            "application_id": application_id,
+            "loan_id": loan_id_int,
             "demand_date": demand_date,
             "demand_calling_status": demand_calling_status,
             "repayment_status": repayment_status_name,
@@ -128,5 +130,11 @@ def get_application_status(
         
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Invalid date format: {str(e)}")
+    except HTTPException:
+        # Re-raise HTTPExceptions as-is
+        raise
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to get status: {str(e)}")
+        # Log the full error for debugging
+        import traceback
+        error_details = f"Unexpected error: {str(e)}\nTraceback: {traceback.format_exc()}"
+        raise HTTPException(status_code=400, detail=f"Failed to get status: {error_details}")

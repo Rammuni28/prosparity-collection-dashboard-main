@@ -1,18 +1,20 @@
 from fastapi import FastAPI
-from app.api.v1.routes import user
-from app.api.v1.routes import summary_status
-from app.api.v1.routes import filter_main
-from app.api.v1.routes import application_row
-from app.api.v1.routes import comments
-from app.api.v1.routes import status_management
-
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.v1.routes import (
+    application_row,
+    filter_main,
+    summary_status,
+    user,
+    comments,
+    status_management,
+    paidpending_approval,
+    paidpending_applications,
+    contacts
+)
 
+app = FastAPI(title="Prosparity Collection Dashboard API", version="1.0.0")
 
-
-app = FastAPI(title="PROSPARITY API")
-
-# CORS for Postman/local testing
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -21,16 +23,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include routers
+app.include_router(application_row.router, prefix="/api/v1/applications", tags=["Applications"])
+app.include_router(filter_main.router, prefix="/api/v1/filters", tags=["Filters"])
+app.include_router(summary_status.router, prefix="/api/v1/summary", tags=["Summary"])
 app.include_router(user.router, prefix="/api/v1/users", tags=["Users"])
-app.include_router(summary_status.router, prefix="/api/v1/summary_status", tags=["summary_status"])
-app.include_router(filter_main.router, prefix="/api/v1/filters", tags=["filters"])
-app.include_router(application_row.router, prefix="/api/v1/applications", tags=["applications"])
-app.include_router(comments.router, prefix="/api/v1/comments", tags=["comments"])
-app.include_router(status_management.router, prefix="/api/v1/status-management", tags=["status-management"])
-
-
-
+app.include_router(comments.router, prefix="/api/v1/comments", tags=["Comments"])
+app.include_router(status_management.router, prefix="/api/v1/status-management", tags=["Status Management"])
+app.include_router(paidpending_approval.router, prefix="/api/v1/paidpending-approval", tags=["PaidPending Approval"])
+app.include_router(paidpending_applications.router, prefix="/api/v1/paidpending-applications", tags=["PaidPending Applications"])
+app.include_router(contacts.router, prefix="/api/v1/contacts", tags=["Contacts"])
 
 @app.get("/")
-def root():
-    return {"message": "PROSPARITY API is running"} 
+def read_root():
+    return {"message": "Prosparity Collection Dashboard API is running!"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"} 

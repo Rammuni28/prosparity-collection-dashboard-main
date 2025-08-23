@@ -13,7 +13,7 @@ from .contact_calling import ContactCalling
 from .demand_calling import DemandCalling
 from .co_applicant import CoApplicant
 from .guarantor import Guarantor
-from .applicant_references import ApplicantReferences
+from .reference import Reference
 from .audit_applicant_details import AuditApplicantDetails
 from .audit_payment_details import AuditPaymentDetails
 from .vehicle_status import VehicleStatus 

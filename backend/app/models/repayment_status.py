@@ -9,6 +9,9 @@ class RepaymentStatusEnum(str, enum.Enum):
     Paid = "Paid"
     Overdue = "Overdue"
     Foreclose = "Foreclose"
+    Paid_Pending_Approval = "Paid(Pending Approval)"
+    paidpending = "paidpending"
+    Paid_Rejected = "Paid Rejected"
 
 class RepaymentStatus(Base):
     __tablename__ = "repayment_status"
@@ -19,4 +22,4 @@ class RepaymentStatus(Base):
     
     # Relationships
     payment_details = relationship("PaymentDetails", back_populates="repayment_status")
-    calls = relationship("Calling", back_populates="status") 
+    # Note: No direct relationship to Calling table - they're linked via payment_details.id 

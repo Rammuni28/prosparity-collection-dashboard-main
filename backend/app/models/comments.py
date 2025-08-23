@@ -8,6 +8,7 @@ class Comments(Base):
     repayment_id = Column(Text)
     user_id = Column(Integer, ForeignKey("users.id"))
     comment = Column(Text)
+    comment_type = Column(Integer, default=1)  # 1 for application details, 2 for paid pending
     commented_at = Column(TIMESTAMP)
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())

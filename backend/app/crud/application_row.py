@@ -39,7 +39,7 @@ def get_filtered_applications(
 
     query = (
         db.query(
-            LoanDetails.loan_application_id.label("application_id"),
+            ApplicantDetails.applicant_id.label("application_id"),
             ApplicantDetails.first_name,
             ApplicantDetails.last_name,
             PaymentDetails.demand_amount.label("emi_amount"),
@@ -54,6 +54,7 @@ def get_filtered_applications(
             PaymentDetails.mode.label("calling_status"),
             PaymentDetails.id.label("payment_id")
         )
+        .select_from(LoanDetails)
         .join(ApplicantDetails, LoanDetails.applicant_id == ApplicantDetails.applicant_id)
         .join(
             latest_payment_subq,
@@ -81,7 +82,7 @@ def get_filtered_applications(
             func.concat(ApplicantDetails.first_name, ' ', ApplicantDetails.last_name).ilike(f'%{search}%'),
             ApplicantDetails.first_name.ilike(f'%{search}%'),
             ApplicantDetails.last_name.ilike(f'%{search}%'),
-            LoanDetails.loan_application_id.ilike(f'%{search}%')
+            ApplicantDetails.applicant_id.ilike(f'%{search}%')
         )
         query = query.filter(search_filter)
     
