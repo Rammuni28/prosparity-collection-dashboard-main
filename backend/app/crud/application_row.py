@@ -42,6 +42,7 @@ def get_filtered_applications(
     query = (
         db.query(
             ApplicantDetails.applicant_id.label("application_id"),
+            LoanDetails.loan_application_id.label("loan_id"),  # Added loan_id
             ApplicantDetails.first_name,
             ApplicantDetails.last_name,
             PaymentDetails.demand_amount.label("emi_amount"),
@@ -171,6 +172,7 @@ def get_filtered_applications(
 
         results.append({
             "application_id": str(row.application_id),
+            "loan_id": row.loan_id, # Added loan_id to response
             "applicant_name": f"{row.first_name or ''} {row.last_name or ''}".strip(),
             "emi_amount": float(row.emi_amount) if row.emi_amount else None,
             "status": row.status,

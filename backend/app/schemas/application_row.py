@@ -3,6 +3,7 @@ from typing import Optional, List, Dict
 
 class ApplicationItem(BaseModel):
     application_id: str
+    loan_id: int  # Added loan_id field
     applicant_name: str
     emi_amount: Optional[float]
     status: Optional[str]
