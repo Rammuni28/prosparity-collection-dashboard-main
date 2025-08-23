@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 class ApplicationItem(BaseModel):
     application_id: str
@@ -13,20 +13,25 @@ class ApplicationItem(BaseModel):
     dealer: Optional[str]
     lender: Optional[str]
     ptp_date: Optional[str]
-    calling_status: Optional[str] = None 
+    calling_statuses: Dict[str, str] = {  # All 4 contact types calling status
+        "applicant": "Not Called",
+        "co_applicant": "Not Called", 
+        "guarantor": "Not Called",
+        "reference": "Not Called"
+    }
+    payment_mode: Optional[str] = None  # Payment mode (UPI, Cash, etc.)
     comments: List[str] = []
 
 class ApplicationFilters(BaseModel):
-    """Schema for essential filter parameters"""
-    emi_month: Optional[str] = None
-    search: Optional[str] = None
-    branch: Optional[str] = None
-    dealer: Optional[str] = None
-    lender: Optional[str] = None
-    status: Optional[str] = None
-    rm_name: Optional[str] = None
-    tl_name: Optional[str] = None
-    ptp_date_filter: Optional[str] = None
+    emi_month: Optional[str] = ""
+    search: Optional[str] = ""
+    branch: Optional[str] = ""
+    dealer: Optional[str] = ""
+    lender: Optional[str] = ""
+    status: Optional[str] = ""
+    rm_name: Optional[str] = ""
+    tl_name: Optional[str] = ""
+    ptp_date_filter: Optional[str] = ""
     offset: Optional[int] = 0
     limit: Optional[int] = 20
 

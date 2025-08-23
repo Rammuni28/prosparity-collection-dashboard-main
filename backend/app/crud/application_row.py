@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, aliased
-from sqlalchemy import desc, func, or_
+from sqlalchemy import desc, func, or_, and_
 from app.models.loan_details import LoanDetails
 from app.models.applicant_details import ApplicantDetails
 from app.models.payment_details import PaymentDetails
@@ -9,6 +9,8 @@ from app.models.lenders import Lender
 from app.models.comments import Comments
 from app.models.user import User
 from app.models.repayment_status import RepaymentStatus
+from app.models.calling import Calling
+from app.models.contact_calling import ContactCalling
 from datetime import date, timedelta
 
 def get_filtered_applications(
@@ -51,7 +53,7 @@ def get_filtered_applications(
             Dealer.name.label("dealer"),
             Lender.name.label("lender"),
             PaymentDetails.ptp_date.label("ptp_date"),
-            PaymentDetails.mode.label("calling_status"),
+            PaymentDetails.mode.label("payment_mode"),
             PaymentDetails.id.label("payment_id")
         )
         .select_from(LoanDetails)
@@ -128,6 +130,40 @@ def get_filtered_applications(
         comments = db.query(Comments).filter(Comments.repayment_id == row.payment_id).order_by(Comments.commented_at.desc()).all()
         comment_list = [c.comment for c in comments]
 
+        # Get calling status for ALL 4 contact types (1=applicant, 2=co-applicant, 3=guarantor, 4=reference)
+        calling_statuses = {
+            "applicant": "Not Called",      # contact_type = 1
+            "co_applicant": "Not Called",   # contact_type = 2
+            "guarantor": "Not Called",      # contact_type = 3
+            "reference": "Not Called"       # contact_type = 4
+        }
+        
+        # Get latest calling records for each contact type for this payment (repayment_id)
+        for contact_type in range(1, 5):  # 1 to 4
+            latest_calling = db.query(Calling).filter(
+                and_(
+                    Calling.repayment_id == str(row.payment_id),
+                    Calling.Calling_id == 1,  # Only contact calling, not demand calling
+                    Calling.contact_type == contact_type
+                )
+            ).order_by(Calling.created_at.desc()).first()
+            
+            if latest_calling:
+                # Get contact calling status
+                contact_status = db.query(ContactCalling).filter(
+                    ContactCalling.id == latest_calling.status_id
+                ).first()
+                if contact_status:
+                    # Map contact_type number to string key
+                    if contact_type == 1:
+                        calling_statuses["applicant"] = contact_status.contact_calling_status
+                    elif contact_type == 2:
+                        calling_statuses["co_applicant"] = contact_status.contact_calling_status
+                    elif contact_type == 3:
+                        calling_statuses["guarantor"] = contact_status.contact_calling_status
+                    elif contact_type == 4:
+                        calling_statuses["reference"] = contact_status.contact_calling_status
+
         results.append({
             "application_id": str(row.application_id),
             "applicant_name": f"{row.first_name or ''} {row.last_name or ''}".strip(),
@@ -140,7 +176,8 @@ def get_filtered_applications(
             "dealer": row.dealer,
             "lender": row.lender,
             "ptp_date": row.ptp_date.strftime('%y-%m-%d') if row.ptp_date else None,
-            "calling_status": row.calling_status,
+            "calling_statuses": calling_statuses,  # All 4 contact types calling status
+            "payment_mode": row.payment_mode,      # Payment mode separate
             "comments": comment_list
         })
 
