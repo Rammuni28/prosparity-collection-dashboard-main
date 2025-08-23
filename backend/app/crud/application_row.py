@@ -126,8 +126,13 @@ def get_filtered_applications(
     results = []
 
     for row in query.offset(offset).limit(limit).all():
-        # Get comments for this payment
-        comments = db.query(Comments).filter(Comments.repayment_id == row.payment_id).order_by(Comments.commented_at.desc()).all()
+        # Get comments for this payment (only application details comments, comment_type = 1)
+        comments = db.query(Comments).filter(
+            and_(
+                Comments.repayment_id == row.payment_id,
+                Comments.comment_type == 1  # Only application details comments, not paid pending
+            )
+        ).order_by(Comments.commented_at.desc()).all()
         comment_list = [c.comment for c in comments]
 
         # Get calling status for ALL 4 contact types (1=applicant, 2=co-applicant, 3=guarantor, 4=reference)
