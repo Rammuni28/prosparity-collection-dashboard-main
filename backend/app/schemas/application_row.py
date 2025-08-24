@@ -5,6 +5,7 @@ class ApplicationItem(BaseModel):
     application_id: str
     loan_id: int  # Added loan_id field
     payment_id: int  # 🎯 ADDED! This is the repayment_id for comments
+    demand_num: Optional[str] = None  # 🎯 ADDED! Repayment Number from demand_num
     applicant_name: str
     emi_amount: Optional[float]
     status: Optional[str]

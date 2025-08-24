@@ -37,6 +37,7 @@ def get_filtered_applications(
     base_fields = [
         ApplicantDetails.applicant_id.label("application_id"),
         LoanDetails.loan_application_id.label("loan_id"),  # Added loan_id
+        PaymentDetails.demand_num.label("demand_num"),  # 🎯 ADDED! Repayment Number
         ApplicantDetails.first_name,
         ApplicantDetails.last_name,
         PaymentDetails.demand_amount.label("emi_amount"),
@@ -209,6 +210,7 @@ def get_filtered_applications(
             "application_id": str(row.application_id),
             "loan_id": row.loan_id, # Added loan_id to response
             "payment_id": row.payment_id,  # 🎯 ADDED! This is the repayment_id for comments
+            "demand_num": str(row.demand_num) if row.demand_num else None,  # 🎯 ADDED! Repayment Number (converted to string)
             "applicant_name": f"{row.first_name or ''} {row.last_name or ''}".strip(),
             "emi_amount": float(row.emi_amount) if row.emi_amount else None,
             "status": row.status,
