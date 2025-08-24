@@ -9,7 +9,8 @@ from app.api.v1.routes import (
     status_management,
     paidpending_approval,
     paidpending_applications,
-    contacts
+    contacts,
+    month_dropdown
 )
 
 app = FastAPI(title="Prosparity Collection Dashboard API", version="1.0.0")
@@ -33,6 +34,7 @@ app.include_router(status_management.router, prefix="/api/v1/status-management",
 app.include_router(paidpending_approval.router, prefix="/api/v1/paidpending-approval", tags=["PaidPending Approval"])
 app.include_router(paidpending_applications.router, prefix="/api/v1/paidpending-applications", tags=["PaidPending Applications"])
 app.include_router(contacts.router, prefix="/api/v1/contacts", tags=["Contacts"])
+app.include_router(month_dropdown.router, prefix="/api/v1/month-dropdown", tags=["Month Dropdown"])
 
 @app.get("/")
 def read_root():

@@ -61,6 +61,7 @@ def get_paidpending_applications_list(
                 
                 application_data = {
                     "loan_id": payment.loan_application_id,
+                    "repayment_id": str(payment.id),  # 🎯 ADDED! Repayment ID
                     "applicant_id": loan.applicant_id,
                     "applicant_name": f"{applicant.first_name or ''} {applicant.last_name or ''}".strip() if applicant else "Unknown",
                     "current_status": current_status.repayment_status if current_status else "Unknown",
@@ -139,6 +140,7 @@ def get_paidpending_application_status(
         
         return {
             "loan_id": loan_id_int,
+            "repayment_id": str(payment_record.id),  # 🎯 ADDED! Repayment ID
             "applicant_id": loan.applicant_id if loan else None,
             "applicant_name": f"{applicant.first_name or ''} {applicant.last_name or ''}".strip() if applicant else "Unknown",
             "current_status": current_status.repayment_status if current_status else "Unknown",

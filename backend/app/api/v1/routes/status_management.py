@@ -10,7 +10,6 @@ from app.models.contact_calling import ContactCalling
 from app.models.calling import Calling
 from sqlalchemy import and_
 from typing import Optional
-from datetime import date
 
 router = APIRouter()
 
@@ -50,10 +49,10 @@ def update_application_status(
 @router.get("/{loan_id}")
 def get_application_status(
     loan_id: str,
-    demand_date: str = Query(..., description="Demand date in YYYY-MM-DD format"),
+    repayment_id: str = Query(..., description="Repayment ID (payment details ID) to get status for"),
     db: Session = Depends(get_db)
 ):
-    """Get current status for an application"""
+    """Get current status for an application by repayment_id"""
     try:
         # Convert loan_id to integer
         try:
@@ -61,20 +60,24 @@ def get_application_status(
         except ValueError:
             raise HTTPException(status_code=400, detail=f"Invalid loan_id: {loan_id}. Must be a valid integer.")
         
-        parsed_demand_date = date.fromisoformat(demand_date)
+        # Convert repayment_id to integer
+        try:
+            repayment_id_int = int(repayment_id)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid repayment_id: {repayment_id}. Must be a valid integer.")
         
-        # Get payment details
+        # Get payment details by repayment_id
         payment_details = db.query(PaymentDetails).filter(
             and_(
-                PaymentDetails.loan_application_id == loan_id_int,
-                PaymentDetails.demand_date == parsed_demand_date
+                PaymentDetails.id == repayment_id_int,
+                PaymentDetails.loan_application_id == loan_id_int
             )
         ).first()
         
         if not payment_details:
             raise HTTPException(
                 status_code=404, 
-                detail=f"Payment details not found for loan_id: {loan_id_int} and demand_date: {demand_date}"
+                detail=f"Payment details not found for loan_id: {loan_id_int} and repayment_id: {repayment_id}"
             )
         
         # Get repayment status name
@@ -120,7 +123,7 @@ def get_application_status(
         
         return {
             "loan_id": loan_id_int,
-            "demand_date": demand_date,
+            "repayment_id": repayment_id,  # 🎯 ADDED! Return the repayment_id
             "demand_calling_status": demand_calling_status,
             "repayment_status": repayment_status_name,
             "ptp_date": payment_details.ptp_date.isoformat() if payment_details.ptp_date else None,

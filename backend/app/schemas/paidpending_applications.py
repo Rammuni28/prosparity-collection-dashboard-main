@@ -1,12 +1,11 @@
 from pydantic import BaseModel
 from typing import List, Optional
-from datetime import date
 
 class PaidPendingApplication(BaseModel):
     loan_id: str
     applicant_name: str
     emi_amount: Optional[float]
-    demand_date: str
+    repayment_id: str  # 🎯 CHANGED! From demand_date to repayment_id
     ptp_date: Optional[str]
     amount_collected: Optional[float]
     branch: str

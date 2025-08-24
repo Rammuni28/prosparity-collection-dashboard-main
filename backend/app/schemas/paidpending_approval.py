@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 from typing import Optional
-from datetime import date
 from enum import Enum
 
 class ApprovalActionEnum(str, Enum):
@@ -9,14 +8,14 @@ class ApprovalActionEnum(str, Enum):
 
 class PaidPendingApprovalRequest(BaseModel):
     loan_id: str
-    demand_date: date
+    repayment_id: str  # 🎯 CHANGED! From demand_date to repayment_id
     action: ApprovalActionEnum  # accept or reject
     user_id: int  # Who is approving/rejecting
     comments: Optional[str] = None  # Optional comments for rejection
 
 class PaidPendingApprovalResponse(BaseModel):
     loan_id: str
-    demand_date: str
+    repayment_id: str  # 🎯 CHANGED! From demand_date to repayment_id
     action: str
     previous_status: str
     new_status: str

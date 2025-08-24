@@ -38,7 +38,7 @@ def get_paid_pending_applications(
             ApplicantDetails.first_name,
             ApplicantDetails.last_name,
             PaymentDetails.demand_amount.label("emi_amount"),
-            PaymentDetails.demand_date.label("demand_date"),
+            PaymentDetails.id.label("repayment_id"),  # 🎯 CHANGED! From demand_date to repayment_id
             PaymentDetails.ptp_date.label("ptp_date"),
             PaymentDetails.amount_collected.label("amount_collected"),
             Branch.name.label("branch"),
@@ -78,7 +78,7 @@ def get_paid_pending_applications(
             "loan_id": str(row.loan_id),
             "applicant_name": f"{row.first_name or ''} {row.last_name or ''}".strip(),
             "emi_amount": float(row.emi_amount) if row.emi_amount else None,
-            "demand_date": row.demand_date.strftime('%Y-%m-%d') if row.demand_date else None,
+            "repayment_id": str(row.repayment_id),  # 🎯 CHANGED! From demand_date to repayment_id
             "ptp_date": row.ptp_date.strftime('%Y-%m-%d') if row.ptp_date else None,
             "amount_collected": float(row.amount_collected) if row.amount_collected else None,
             "branch": row.branch,

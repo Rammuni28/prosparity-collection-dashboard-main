@@ -4,7 +4,6 @@ from typing import Optional
 from app.models.payment_details import PaymentDetails
 from app.models.repayment_status import RepaymentStatus
 from app.schemas.paidpending_approval import PaidPendingApprovalRequest
-from datetime import date
 
 def process_paidpending_approval(
     db: Session,
@@ -12,16 +11,16 @@ def process_paidpending_approval(
 ) -> dict:
     """Process paidpending approval - accept or reject"""
     
-    # First, get the payment_details record for this application and demand_date
+    # First, get the payment_details record for this application and repayment_id
     payment_record = db.query(PaymentDetails).filter(
         and_(
             PaymentDetails.loan_application_id == approval_data.loan_id,
-            PaymentDetails.demand_date == approval_data.demand_date
+            PaymentDetails.id == int(approval_data.repayment_id)
         )
     ).first()
     
     if not payment_record:
-        raise ValueError(f"No payment record found for application {approval_data.loan_id} and demand date {approval_data.demand_date}")
+        raise ValueError(f"No payment record found for application {approval_data.loan_id} and repayment_id {approval_data.repayment_id}")
     
     # Get current repayment status name BEFORE updating (this is the previous status)
     previous_status_name = None
@@ -90,7 +89,7 @@ def process_paidpending_approval(
     
     return {
         "loan_id": str(approval_data.loan_id),
-        "demand_date": approval_data.demand_date.isoformat(),
+        "repayment_id": approval_data.repayment_id,  # 🎯 CHANGED! From demand_date to repayment_id
         "action": approval_data.action,
         "previous_status": previous_status_name or "Unknown",
         "new_status": new_status_name,

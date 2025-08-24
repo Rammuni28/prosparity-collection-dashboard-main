@@ -14,9 +14,15 @@ class RepaymentStatusEnum(str, Enum):
     paidpending = "paidpending"
     Paid_Rejected = "Paid Rejected"
 
+class CallingTypeEnum(int, Enum):
+    """Calling types for status management"""
+    contact_calling = 1    # Contact calling (answered, not answered, not called)
+    demand_calling = 2     # Demand calling (deposited in bank, cash collected, PTP taken, no response)
+
 class StatusManagementUpdate(BaseModel):
     loan_id: str
-    demand_date: Optional[date] = None
+    repayment_id: Optional[str] = None  # 🎯 ADDED! Specific payment/repayment to update
+    calling_type: Optional[CallingTypeEnum] = CallingTypeEnum.contact_calling  # 1=contact, 2=demand
     demand_calling_status: Optional[int] = None  # ID from demand_calling table
     repayment_status: Optional[int] = None  # ID from repayment_status table
     ptp_date: Optional[date] = None
@@ -26,7 +32,8 @@ class StatusManagementUpdate(BaseModel):
 
 class StatusManagementResponse(BaseModel):
     loan_id: str
-    demand_date: Optional[date] = None
+    repayment_id: Optional[str] = None  # 🎯 ADDED! Specific payment/repayment that was updated
+    calling_type: Optional[int] = None  # 1=contact, 2=demand
     demand_calling_status: Optional[int] = None
     repayment_status: Optional[int] = None
     ptp_date: Optional[date] = None

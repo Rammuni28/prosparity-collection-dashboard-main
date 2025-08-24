@@ -4,6 +4,7 @@ from typing import Optional, List, Dict
 class ApplicationItem(BaseModel):
     application_id: str
     loan_id: int  # Added loan_id field
+    payment_id: int  # 🎯 ADDED! This is the repayment_id for comments
     applicant_name: str
     emi_amount: Optional[float]
     status: Optional[str]
@@ -21,6 +22,9 @@ class ApplicationItem(BaseModel):
         "reference": "Not Called"
     }
     payment_mode: Optional[str] = None  # Payment mode (UPI, Cash, etc.)
+    loan_amount: Optional[float] = None  # 🎯 ADDED! Loan Amount
+    disbursement_date: Optional[str] = None  # 🎯 ADDED! Disbursement Date  
+    house_ownership: Optional[str] = None  # 🎯 ADDED! House Ownership
     comments: List[str] = []
 
 class ApplicationFilters(BaseModel):
@@ -33,6 +37,7 @@ class ApplicationFilters(BaseModel):
     rm_name: Optional[str] = ""
     tl_name: Optional[str] = ""
     ptp_date_filter: Optional[str] = ""
+    repayment_id: Optional[str] = ""  # 🎯 ADDED! Filter by repayment_id
     offset: Optional[int] = 0
     limit: Optional[int] = 20
 

@@ -11,10 +11,12 @@ from app.models.user import User
 from app.models.repayment_status import RepaymentStatus
 from app.models.calling import Calling
 from app.models.contact_calling import ContactCalling
+from app.models.ownership_type import OwnershipType  # 🎯 ADDED! For House Ownership
 from datetime import date, timedelta
 
 def get_filtered_applications(
-    db: Session, 
+    db: Session,
+    loan_id: str = "",  # 🎯 ADDED! Filter by specific loan ID
     emi_month: str = "", 
     search: str = "",
     branch: str = "",
@@ -24,61 +26,90 @@ def get_filtered_applications(
     rm_name: str = "",
     tl_name: str = "",
     ptp_date_filter: str = "",
+    repayment_id: str = "",  # 🎯 ADDED! Filter by repayment_id (same as payment_id)
     offset: int = 0, 
     limit: int = 20
 ):
     RM = aliased(User)
     TL = aliased(User)
 
-    latest_payment_subq = (
-        db.query(
-            PaymentDetails.loan_application_id,
-            func.max(PaymentDetails.demand_date).label("max_demand_date")
+    # Create base query fields
+    base_fields = [
+        ApplicantDetails.applicant_id.label("application_id"),
+        LoanDetails.loan_application_id.label("loan_id"),  # Added loan_id
+        ApplicantDetails.first_name,
+        ApplicantDetails.last_name,
+        PaymentDetails.demand_amount.label("emi_amount"),
+        RepaymentStatus.repayment_status.label("status"),
+        PaymentDetails.demand_date.label('emi_month'),
+        Branch.name.label("branch"),
+        RM.name.label("rm_name"),
+        TL.name.label("tl_name"),
+        Dealer.name.label("dealer"),
+        Lender.name.label("lender"),
+        PaymentDetails.ptp_date.label("ptp_date"),
+        PaymentDetails.mode.label("payment_mode"),
+        PaymentDetails.id.label("payment_id"),
+        LoanDetails.disbursal_amount.label("loan_amount"),  # 🎯 ADDED! Loan Amount
+        LoanDetails.disbursal_date.label("disbursement_date"),  # 🎯 ADDED! Disbursement Date
+        OwnershipType.ownership_type_name.label("house_ownership")  # 🎯 ADDED! House Ownership
+    ]
+    
+    if emi_month:
+        # 🎯 FIXED! If emi_month is provided, get that specific month's payment
+        query = (
+            db.query(*base_fields)
+            .select_from(LoanDetails)
+            .join(ApplicantDetails, LoanDetails.applicant_id == ApplicantDetails.applicant_id)
+            .join(
+                PaymentDetails,
+                (PaymentDetails.loan_application_id == LoanDetails.loan_application_id) &
+                (func.date_format(PaymentDetails.demand_date, '%b-%y') == emi_month)  # 🎯 Direct month filter
+            )
+            .join(Branch, ApplicantDetails.branch_id == Branch.id)
+            .join(Dealer, ApplicantDetails.dealer_id == Dealer.id)
+            .join(Lender, LoanDetails.lenders_id == Lender.id)
+            .join(OwnershipType, ApplicantDetails.ownership_type_id == OwnershipType.id)
+            .join(RM, LoanDetails.Collection_relationship_manager_id == RM.id)
+            .join(TL, LoanDetails.source_relationship_manager_id == TL.id)
+            .join(RepaymentStatus, PaymentDetails.repayment_status_id == RepaymentStatus.id)
         )
-        .group_by(PaymentDetails.loan_application_id)
-        .subquery()
-    )
-
-    query = (
-        db.query(
-            ApplicantDetails.applicant_id.label("application_id"),
-            LoanDetails.loan_application_id.label("loan_id"),  # Added loan_id
-            ApplicantDetails.first_name,
-            ApplicantDetails.last_name,
-            PaymentDetails.demand_amount.label("emi_amount"),
-            RepaymentStatus.repayment_status.label("status"),
-            PaymentDetails.demand_date.label('emi_month'),
-            Branch.name.label("branch"),
-            RM.name.label("rm_name"),
-            TL.name.label("tl_name"),
-            Dealer.name.label("dealer"),
-            Lender.name.label("lender"),
-            PaymentDetails.ptp_date.label("ptp_date"),
-            PaymentDetails.mode.label("payment_mode"),
-            PaymentDetails.id.label("payment_id")
+    else:
+        # If no emi_month, use current logic (latest payment)
+        latest_payment_subq = (
+            db.query(
+                PaymentDetails.loan_application_id,
+                func.max(PaymentDetails.demand_date).label("max_demand_date")
+            )
+            .group_by(PaymentDetails.loan_application_id)
+            .subquery()
         )
-        .select_from(LoanDetails)
-        .join(ApplicantDetails, LoanDetails.applicant_id == ApplicantDetails.applicant_id)
-        .join(
-            latest_payment_subq,
-            LoanDetails.loan_application_id == latest_payment_subq.c.loan_application_id
+        
+        query = (
+            db.query(*base_fields)
+            .select_from(LoanDetails)
+            .join(ApplicantDetails, LoanDetails.applicant_id == ApplicantDetails.applicant_id)
+            .join(
+                latest_payment_subq,
+                LoanDetails.loan_application_id == latest_payment_subq.c.loan_application_id
+            )
+            .join(
+                PaymentDetails,
+                (PaymentDetails.loan_application_id == latest_payment_subq.c.loan_application_id) &
+                (PaymentDetails.demand_date == latest_payment_subq.c.max_demand_date)
+            )
+            .join(Branch, ApplicantDetails.branch_id == Branch.id)
+            .join(Dealer, ApplicantDetails.dealer_id == Dealer.id)
+            .join(Lender, LoanDetails.lenders_id == Lender.id)
+            .join(OwnershipType, ApplicantDetails.ownership_type_id == OwnershipType.id)
+            .join(RM, LoanDetails.Collection_relationship_manager_id == RM.id)
+            .join(TL, LoanDetails.source_relationship_manager_id == TL.id)
+            .join(RepaymentStatus, PaymentDetails.repayment_status_id == RepaymentStatus.id)
         )
-        .join(
-            PaymentDetails,
-            (PaymentDetails.loan_application_id == latest_payment_subq.c.loan_application_id) &
-            (PaymentDetails.demand_date == latest_payment_subq.c.max_demand_date)
-        )
-        .join(Branch, ApplicantDetails.branch_id == Branch.id)
-        .join(Dealer, ApplicantDetails.dealer_id == Dealer.id)
-        .join(Lender, LoanDetails.lenders_id == Lender.id)
-        .join(RM, LoanDetails.Collection_relationship_manager_id == RM.id)
-        .join(TL, LoanDetails.source_relationship_manager_id == TL.id)
-        .join(RepaymentStatus, PaymentDetails.repayment_status_id == RepaymentStatus.id)
-    )
 
     # Apply essential filters only
-    if emi_month:
-        query = query.filter(func.date_format(PaymentDetails.demand_date, '%b-%y') == emi_month)
+    if loan_id:
+        query = query.filter(LoanDetails.loan_application_id == int(loan_id))  # 🎯 ADDED! Filter by loan_id
     
     if search:
         search_filter = or_(
@@ -106,6 +137,10 @@ def get_filtered_applications(
     
     if tl_name:
         query = query.filter(TL.name == tl_name)
+    
+    # Repayment ID filtering
+    if repayment_id:
+        query = query.filter(PaymentDetails.id == int(repayment_id))  # 🎯 ADDED! Filter by repayment_id
     
     # PTP date filtering
     if ptp_date_filter:
@@ -173,6 +208,7 @@ def get_filtered_applications(
         results.append({
             "application_id": str(row.application_id),
             "loan_id": row.loan_id, # Added loan_id to response
+            "payment_id": row.payment_id,  # 🎯 ADDED! This is the repayment_id for comments
             "applicant_name": f"{row.first_name or ''} {row.last_name or ''}".strip(),
             "emi_amount": float(row.emi_amount) if row.emi_amount else None,
             "status": row.status,
@@ -185,6 +221,9 @@ def get_filtered_applications(
             "ptp_date": row.ptp_date.strftime('%y-%m-%d') if row.ptp_date else None,
             "calling_statuses": calling_statuses,  # All 4 contact types calling status
             "payment_mode": row.payment_mode,      # Payment mode separate
+            "loan_amount": float(row.loan_amount) if row.loan_amount else None,  # 🎯 ADDED! Loan Amount
+            "disbursement_date": row.disbursement_date.strftime('%Y-%m-%d') if row.disbursement_date else None,  # 🎯 ADDED! Disbursement Date
+            "house_ownership": row.house_ownership,  # 🎯 ADDED! House Ownership
             "comments": comment_list
         })
 
