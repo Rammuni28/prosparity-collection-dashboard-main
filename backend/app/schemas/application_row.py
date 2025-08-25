@@ -24,6 +24,7 @@ class ApplicationItem(BaseModel):
     }
     demand_calling_status: Optional[str] = None  # 🎯 ADDED! Demand calling status
     payment_mode: Optional[str] = None  # Payment mode (UPI, Cash, etc.)
+    amount_collected: Optional[float] = None  # 🎯 ADDED! Amount collected from payment_details
     loan_amount: Optional[float] = None  # 🎯 ADDED! Loan Amount
     disbursement_date: Optional[str] = None  # 🎯 ADDED! Disbursement Date  
     house_ownership: Optional[str] = None  # 🎯 ADDED! House Ownership

@@ -1,8 +1,142 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 from app.models.payment_details import PaymentDetails
-from sqlalchemy import func, text
+from app.models.applicant_details import ApplicantDetails
+from app.models.loan_details import LoanDetails
+from app.models.branch import Branch
+from app.models.dealer import Dealer
+from app.models.lenders import Lender
+from app.models.user import User
+from app.models.repayment_status import RepaymentStatus
+from sqlalchemy import func, text, and_, or_
 from fastapi import HTTPException
-from datetime import datetime
+from datetime import datetime, date, timedelta
+
+def get_summary_status_with_filters(
+    db: Session, 
+    emi_month: str = None,
+    branch: str = None,
+    dealer: str = None,
+    lender: str = None,
+    status: str = None,
+    rm_name: str = None,
+    tl_name: str = None,
+    ptp_date_filter: str = None,
+    repayment_id: str = None,
+    demand_num: str = None
+) -> dict:
+    """
+    Get summary status with filters applied - same filters as application_row API
+    """
+    RM = aliased(User)
+    TL = aliased(User)
+    
+    # Base query with joins
+    query = (
+        db.query(PaymentDetails)
+        .select_from(PaymentDetails)
+        .join(LoanDetails, PaymentDetails.loan_application_id == LoanDetails.loan_application_id)
+        .join(ApplicantDetails, LoanDetails.applicant_id == ApplicantDetails.applicant_id)
+        .join(Branch, ApplicantDetails.branch_id == Branch.id)
+        .join(Dealer, ApplicantDetails.dealer_id == Dealer.id)
+        .join(Lender, LoanDetails.lenders_id == Lender.id)
+        .join(RM, LoanDetails.Collection_relationship_manager_id == RM.id)
+        .join(TL, LoanDetails.source_relationship_manager_id == TL.id)
+        .join(RepaymentStatus, PaymentDetails.repayment_status_id == RepaymentStatus.id)
+    )
+    
+    # Apply filters (same logic as application_row API)
+    if emi_month:
+        try:
+            dt = datetime.strptime(emi_month, '%b-%y')
+            month, year = dt.month, dt.year
+            query = query.filter(
+                and_(
+                    PaymentDetails.demand_month == month,
+                    PaymentDetails.demand_year == year
+                )
+            )
+        except:
+            pass  # Invalid emi_month format
+    
+    if branch:
+        query = query.filter(Branch.name == branch)
+    
+    if dealer:
+        query = query.filter(Dealer.name == dealer)
+    
+    if lender:
+        query = query.filter(Lender.name == lender)
+    
+    if status:
+        query = query.filter(RepaymentStatus.repayment_status == status)
+    
+    if rm_name:
+        query = query.filter(RM.name == rm_name)
+    
+    if tl_name:
+        query = query.filter(TL.name == tl_name)
+    
+    if repayment_id:
+        query = query.filter(PaymentDetails.id == int(repayment_id))
+    
+    if demand_num:
+        query = query.filter(PaymentDetails.demand_num == demand_num)
+    
+    # PTP date filtering
+    if ptp_date_filter:
+        today = date.today()
+        tomorrow = today + timedelta(days=1)
+        
+        if ptp_date_filter == "overdue":
+            query = query.filter(PaymentDetails.ptp_date < today)
+        elif ptp_date_filter == "today":
+            query = query.filter(func.date(PaymentDetails.ptp_date) == today)
+        elif ptp_date_filter == "tomorrow":
+            query = query.filter(func.date(PaymentDetails.ptp_date) == tomorrow)
+        elif ptp_date_filter == "future":
+            query = query.filter(PaymentDetails.ptp_date > tomorrow)
+        elif ptp_date_filter == "no_ptp":
+            query = query.filter(PaymentDetails.ptp_date.is_(None))
+    
+    # Get filtered results
+    results = (
+        query.with_entities(PaymentDetails.repayment_status_id, func.count(PaymentDetails.id))
+        .group_by(PaymentDetails.repayment_status_id)
+        .all()
+    )
+    
+    # Updated status mapping for new status names
+    status_map = {
+        'Paid': 'paid',
+        'Partially Paid': 'partially_paid', 
+        'Future': 'unpaid',
+        'Overdue': 'unpaid',
+        'Foreclose': 'foreclose',
+        'Paid(Pending Approval)': 'paid_pending_approval',  # 🎯 UPDATED! New status name
+        'Paid Rejected': 'paid_rejected'  # 🎯 ADDED! New status
+    }
+    
+    summary = {
+        'total': 0,
+        'paid': 0,
+        'unpaid': 0,
+        'partially_paid': 0,
+        'cash_collected': 0,
+        'customer_deposited': 0,
+        'paid_pending_approval': 0,
+        'foreclose': 0,
+        'paid_rejected': 0  # 🎯 ADDED! New status
+    }
+    
+    for status_id, count in results:
+        status_str = db.query(RepaymentStatus.repayment_status).filter(RepaymentStatus.id == status_id).scalar()
+        if status_str:
+            key = status_map.get(status_str)
+            if key and key in summary:
+                summary[key] += count
+            summary['total'] += count
+    
+    return summary
 
 def emi_month_to_month_year(emi_month: str):
     try:
@@ -12,40 +146,4 @@ def emi_month_to_month_year(emi_month: str):
         raise HTTPException(status_code=400, detail='Invalid emi_month format. Use e.g. Jul-25')
 
 def get_summary_status(db: Session, emi_month: str) -> dict:
-    month, year = emi_month_to_month_year(emi_month)
-    results = (
-        db.query(PaymentDetails.repayment_status_id, func.count(PaymentDetails.id))
-        .filter(PaymentDetails.demand_month == month)
-        .filter(PaymentDetails.demand_year == year)
-        .group_by(PaymentDetails.repayment_status_id)
-        .all()
-    )
-    status_lookup = {}
-    for row in db.execute(text("SELECT id, repayment_status FROM repayment_status")).fetchall():
-        status_lookup[row[0]] = row[1]
-    status_map = {
-        'Paid': 'paid',
-        'Partially Paid': 'partially_paid',
-        'Future': 'unpaid',
-        'Overdue': 'unpaid',
-        'Foreclose': 'foreclose',
-    }
-    summary = {
-        'total': 0,
-        'paid': 0,
-        'unpaid': 0,
-        'partially_paid': 0,
-        'cash_collected': 0,
-        'customer_deposited': 0,
-        'paid_pending_approval': 0,
-        'foreclose': 0
-    }
-    for status_id, count in results:
-        status_str = status_lookup.get(status_id)
-        if status_str not in status_map:
-            print(f"Unknown status in DB: {status_str}")
-        key = status_map.get(status_str, None)
-        if key and key in summary:
-            summary[key] += count
-        summary['total'] += count
-    return summary 
+    return get_summary_status_with_filters(db, emi_month=emi_month) 

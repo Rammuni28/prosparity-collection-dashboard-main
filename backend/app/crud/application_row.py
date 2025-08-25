@@ -50,6 +50,7 @@ def get_filtered_applications(
         Lender.name.label("lender"),
         PaymentDetails.ptp_date.label("ptp_date"),
         PaymentDetails.mode.label("payment_mode"),
+        PaymentDetails.amount_collected.label("amount_collected"),  # 🎯 ADDED! Amount collected
         PaymentDetails.id.label("payment_id"),
         LoanDetails.disbursal_amount.label("loan_amount"),  # 🎯 ADDED! Loan Amount
         LoanDetails.disbursal_date.label("disbursement_date"),  # 🎯 ADDED! Disbursement Date
@@ -243,6 +244,7 @@ def get_filtered_applications(
             "calling_statuses": calling_statuses,  # All 4 contact types calling status
             "demand_calling_status": demand_calling_status,  # 🎯 ADDED! Demand calling status
             "payment_mode": row.payment_mode,      # Payment mode separate
+            "amount_collected": float(row.amount_collected) if row.amount_collected else None,  # 🎯 ADDED! Amount collected
             "loan_amount": float(row.loan_amount) if row.loan_amount else None,  # 🎯 ADDED! Loan Amount
             "disbursement_date": row.disbursement_date.strftime('%Y-%m-%d') if row.disbursement_date else None,  # 🎯 ADDED! Disbursement Date
             "house_ownership": row.house_ownership,  # 🎯 ADDED! House Ownership

@@ -59,7 +59,7 @@ def filter_options(db: Session):
     vehicle_statuses = [v.vehicle_status for v in db.query(VehicleStatus).all()]
     team_leads = [u.name for u in db.query(User).filter(User.role == "TL")]
     rms = [u.name for u in db.query(User).filter(User.role == "RM")]
-    demand_nums = [str(row[0]) for row in db.query(PaymentDetails.demand_num.distinct()).filter(PaymentDetails.demand_num != None).all()]  # 🎯 ADDED! Unique demand numbers
+    demand_num = [str(row[0]) for row in db.query(PaymentDetails.demand_num.distinct()).filter(PaymentDetails.demand_num != None).all()]  # 🎯 ADDED! Unique demand numbers
 
     return {
         "emi_months": emi_months,
@@ -71,7 +71,7 @@ def filter_options(db: Session):
         "vehicle_statuses": vehicle_statuses,
         "team_leads": team_leads,
         "rms": rms,
-        "demand_nums": demand_nums,  # 🎯 ADDED! Demand numbers for filtering
+        "demand_num": demand_num,  # 🎯 ADDED! Demand numbers for filtering
     }
     
 
