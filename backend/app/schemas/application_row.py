@@ -22,6 +22,7 @@ class ApplicationItem(BaseModel):
         "guarantor": "Not Called",
         "reference": "Not Called"
     }
+    demand_calling_status: Optional[str] = None  # 🎯 ADDED! Demand calling status
     payment_mode: Optional[str] = None  # Payment mode (UPI, Cash, etc.)
     loan_amount: Optional[float] = None  # 🎯 ADDED! Loan Amount
     disbursement_date: Optional[str] = None  # 🎯 ADDED! Disbursement Date  

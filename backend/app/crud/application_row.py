@@ -206,6 +206,25 @@ def get_filtered_applications(
                     elif contact_type == 4:
                         calling_statuses["reference"] = contact_status.contact_calling_status
 
+        # Get demand calling status for this payment (repayment_id)
+        demand_calling_status = None  # Default value
+        latest_demand_calling = db.query(Calling).filter(
+            and_(
+                Calling.repayment_id == str(row.payment_id),
+                Calling.Calling_id == 2,  # Demand calling (not contact calling)
+                Calling.contact_type == 1  # For applicant only
+            )
+        ).order_by(Calling.created_at.desc()).first()
+        
+        if latest_demand_calling:
+            # Get demand calling status from demand_calling table (not contact_calling)
+            from app.models.demand_calling import DemandCalling
+            demand_status = db.query(DemandCalling).filter(
+                DemandCalling.id == latest_demand_calling.status_id
+            ).first()
+            if demand_status:
+                demand_calling_status = demand_status.demand_calling_status
+
         results.append({
             "application_id": str(row.application_id),
             "loan_id": row.loan_id, # Added loan_id to response
@@ -222,6 +241,7 @@ def get_filtered_applications(
             "lender": row.lender,
             "ptp_date": row.ptp_date.strftime('%y-%m-%d') if row.ptp_date else None,
             "calling_statuses": calling_statuses,  # All 4 contact types calling status
+            "demand_calling_status": demand_calling_status,  # 🎯 ADDED! Demand calling status
             "payment_mode": row.payment_mode,      # Payment mode separate
             "loan_amount": float(row.loan_amount) if row.loan_amount else None,  # 🎯 ADDED! Loan Amount
             "disbursement_date": row.disbursement_date.strftime('%Y-%m-%d') if row.disbursement_date else None,  # 🎯 ADDED! Disbursement Date

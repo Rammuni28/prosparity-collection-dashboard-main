@@ -11,3 +11,4 @@ class FiltersOptionsResponse(BaseModel):
     vehicle_statuses: List[str]
     team_leads: List[str]
     rms: List[str]
+    demand_nums: List[str]
