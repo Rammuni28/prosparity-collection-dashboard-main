@@ -10,7 +10,7 @@ class CommentTypeEnum(int, Enum):
 class CommentCreate(BaseModel):
     repayment_id: str  # This is payment_details.id
     comment: str
-    user_id: int
+    user_id: Optional[int] = None  # Made optional since backend will override
     comment_type: CommentTypeEnum  # 1 or 2
 
 class CommentResponse(BaseModel):
@@ -20,6 +20,7 @@ class CommentResponse(BaseModel):
     comment: str
     comment_type: int
     commented_at: datetime
+    user_name: str  # Add user name for display
 
 class CommentListResponse(BaseModel):
     total: int

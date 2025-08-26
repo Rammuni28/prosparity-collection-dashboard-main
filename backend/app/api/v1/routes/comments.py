@@ -14,7 +14,9 @@ def create_new_comment(
 ):
     """Create a new comment"""
     try:
-        return create_comment(db, comment)
+        # Override user_id with current user's ID for security
+        comment.user_id = current_user['id']
+        return create_comment(db, comment, current_user['name'])
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to create comment: {str(e)}")
 

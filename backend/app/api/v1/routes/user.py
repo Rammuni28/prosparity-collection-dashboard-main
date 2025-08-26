@@ -74,7 +74,10 @@ def read_users_me(current_user: dict = Depends(get_current_user)):
     """
     Get current user information
     """
-    return current_user
+    # Add user_name field to match UserResponse schema
+    user_data = dict(current_user)
+    user_data['user_name'] = current_user.get('name', 'User')  # Use name as user_name
+    return user_data
 
 @router.post("/change-password")
 def change_password(
