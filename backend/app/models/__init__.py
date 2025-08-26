@@ -16,4 +16,7 @@ from .guarantor import Guarantor
 from .reference import Reference
 from .audit_applicant_details import AuditApplicantDetails
 from .audit_payment_details import AuditPaymentDetails
-from .vehicle_status import VehicleStatus 
+from .vehicle_status import VehicleStatus
+
+# Import Base for database operations
+from app.db.base import Base 

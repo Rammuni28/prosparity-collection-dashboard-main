@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query, HTTPException, Depends
 from sqlalchemy.orm import Session
-from app.api.deps import get_db
+from app.core.deps import get_db, get_current_user
 from app.crud.summary_status import get_summary_status, get_summary_status_with_filters
 from app.schemas.summary_status import SummaryStatusResponse
 
@@ -18,7 +18,8 @@ def summary_status_route(
     ptp_date_filter: str = Query(None, description="Filter by PTP date category"),
     repayment_id: str = Query(None, description="Filter by repayment ID"),
     demand_num: str = Query(None, description="Filter by demand number"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get summary status with optional filters applied

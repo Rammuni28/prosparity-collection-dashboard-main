@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from app.api.deps import get_db
+from app.core.deps import get_db, get_current_user
 from app.schemas.application_row import AppplicationFilterResponse
 from app.crud.application_row import get_filtered_applications
 
@@ -21,7 +21,8 @@ def filter_applications(
     repayment_id: str = Query("", description="Filter by repayment ID (payment details ID)"),  # 🎯 ADDED! Filter by repayment_id
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(20, ge=1, le=1000, description="Maximum number of records to return"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get filtered applications with essential filtering options.

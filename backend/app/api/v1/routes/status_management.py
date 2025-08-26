@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from app.api.deps import get_db
+from app.core.deps import get_db, get_current_user
 from app.schemas.status_management import StatusManagementUpdate, StatusManagementResponse
 from app.crud.status_management import update_status_management
 from app.models.payment_details import PaymentDetails
@@ -17,7 +17,8 @@ router = APIRouter()
 def update_application_status(
     loan_id: str,
     status_update: StatusManagementUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Update multiple status fields for an application in a single API call.
@@ -50,7 +51,8 @@ def update_application_status(
 def get_application_status(
     loan_id: str,
     repayment_id: str = Query(..., description="Repayment ID (payment details ID) to get status for"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Get current status for an application by repayment_id"""
     try:

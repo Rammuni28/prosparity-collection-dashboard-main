@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
-from app.api.deps import get_db
+from app.core.deps import get_db, get_current_user
 from app.models.co_applicant import CoApplicant
 from app.models.guarantor import Guarantor
 from app.models.reference import Reference
@@ -13,7 +13,8 @@ router = APIRouter()
 @router.get("/{loan_id}")
 def get_application_contacts(
     loan_id: str = Path(..., description="The loan ID to get contacts for"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """Get all contacts (applicant, co-applicants, guarantors, references) for an application"""
     try:

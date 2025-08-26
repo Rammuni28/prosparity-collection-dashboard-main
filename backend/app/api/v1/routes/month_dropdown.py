@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app.api.deps import get_db
+from app.core.deps import get_db, get_current_user
 from app.schemas.month_dropdown import MonthDropdownResponse
 from app.crud.month_dropdown import get_month_dropdown_options
 
@@ -9,7 +9,8 @@ router = APIRouter()
 @router.get("/{loan_id}/months", response_model=MonthDropdownResponse)
 def get_month_dropdown_route(
     loan_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
     """
     Get all available months for a loan application.

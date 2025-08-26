@@ -1,14 +1,17 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, func
+from sqlalchemy import Column, Integer, String, TIMESTAMP, func, Enum
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(100))
-    email = Column(String(100), unique=True, index=True)
-    password = Column(String(100))
-    role = Column(String(50))
+    name = Column(String(100), nullable=False)
+    user_name = Column(String(100), nullable=False)  # 🎯 ADDED! Required field from DB
+    password = Column(String(100), nullable=False)
+    email = Column(String(100), unique=True, index=True, nullable=True)
+    mobile = Column(String(15), nullable=True)  # 🎯 ADDED! From DB schema
+    role = Column(String(50), nullable=True)
+    status = Column(Enum('active', 'inactive'), default='active', nullable=True)  # 🎯 ADDED! From DB schema
     created_at = Column(TIMESTAMP, server_default=func.now())
     updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
 

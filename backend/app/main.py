@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
 from app.api.v1.routes import (
     application_row,
     filter_main,
@@ -18,17 +19,17 @@ app = FastAPI(title="Prosparity Collection Dashboard API", version="1.0.0")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Include routers
+app.include_router(user.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(application_row.router, prefix="/api/v1/applications", tags=["Applications"])
 app.include_router(filter_main.router, prefix="/api/v1/filters", tags=["Filters"])
 app.include_router(summary_status.router, prefix="/api/v1/summary", tags=["Summary"])
-app.include_router(user.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(comments.router, prefix="/api/v1/comments", tags=["Comments"])
 app.include_router(status_management.router, prefix="/api/v1/status-management", tags=["Status Management"])
 app.include_router(paidpending_approval.router, prefix="/api/v1/paidpending-approval", tags=["PaidPending Approval"])

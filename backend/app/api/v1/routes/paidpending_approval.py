@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Path
 from sqlalchemy.orm import Session
-from app.api.deps import get_db
+from app.core.deps import get_db, require_admin
 from app.schemas.paidpending_approval import PaidPendingApprovalRequest, PaidPendingApprovalResponse
 from app.crud.paidpending_approval import process_paidpending_approval
 from app.models.payment_details import PaymentDetails
@@ -13,7 +13,8 @@ router = APIRouter()
 
 @router.get("/")
 def get_paidpending_applications_list(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_admin)
 ):
     """
     Get all applications currently in "Paid(Pending Approval)" status
@@ -87,7 +88,8 @@ def get_paidpending_applications_list(
 @router.get("/{loan_id}")
 def get_paidpending_application_status(
     loan_id: str = Path(..., description="The loan ID to check for paid pending status"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_admin)
 ):
     """
     Get the current status of a specific application
@@ -160,7 +162,8 @@ def get_paidpending_application_status(
 @router.post("/approve")
 def approve_reject_paidpending(
     approval_data: PaidPendingApprovalRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(require_admin)
 ):
     """
     Process paidpending approval - accept or reject
