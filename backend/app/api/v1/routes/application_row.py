@@ -19,6 +19,7 @@ def filter_applications(
     tl_name: str = Query("", description="Filter by Team Lead name"),
     ptp_date_filter: str = Query("", description="Filter by PTP date: 'overdue', 'today', 'tomorrow', 'future', 'no_ptp'"),
     repayment_id: str = Query("", description="Filter by repayment ID (payment details ID)"),  # 🎯 ADDED! Filter by repayment_id
+    demand_num: str = Query("", description="Filter by demand number"),  # 🎯 ADDED! Filter by demand_num
     offset: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(20, ge=1, le=1000, description="Maximum number of records to return"),
     db: Session = Depends(get_db),
@@ -33,6 +34,7 @@ def filter_applications(
     - Branch, Dealer, Lender
     - Status, RM, Team Lead
     - PTP date categories
+    - Demand number
     """
     return get_filtered_applications(
         db=db,
@@ -47,6 +49,7 @@ def filter_applications(
         tl_name=tl_name,
         ptp_date_filter=ptp_date_filter,
         repayment_id=repayment_id,  # 🎯 ADDED! Pass repayment_id parameter
+        demand_num=demand_num,  # 🎯 ADDED! Pass demand_num parameter
         offset=offset,
         limit=limit
     )

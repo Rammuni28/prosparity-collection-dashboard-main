@@ -27,6 +27,7 @@ def get_filtered_applications(
     tl_name: str = "",
     ptp_date_filter: str = "",
     repayment_id: str = "",  # 🎯 ADDED! Filter by repayment_id (same as payment_id)
+    demand_num: str = "",  # 🎯 ADDED! Filter by demand number
     offset: int = 0, 
     limit: int = 20
 ):
@@ -143,6 +144,10 @@ def get_filtered_applications(
     # Repayment ID filtering
     if repayment_id:
         query = query.filter(PaymentDetails.id == int(repayment_id))  # 🎯 ADDED! Filter by repayment_id
+    
+    # Demand Number filtering
+    if demand_num:
+        query = query.filter(PaymentDetails.demand_num == int(demand_num))  # 🎯 ADDED! Filter by demand_num
     
     # PTP date filtering
     if ptp_date_filter:
