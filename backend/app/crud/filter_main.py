@@ -20,11 +20,14 @@ def filter_options(db: Session):
     for row in db.query(PaymentDetails.demand_date.distinct()).all() 
     if row[0]
 ])))
+    
+    # FIXED: Use ptp_date for PTP filtering, not payment_date
     raw_dates = [
-    row[0] for row in db.query(PaymentDetails.payment_date)
-    .filter(PaymentDetails.payment_date != None)
-    .all()
-]
+        row[0] for row in db.query(PaymentDetails.ptp_date)
+        .filter(PaymentDetails.ptp_date != None)
+        .all()
+    ]
+    
     ptp_categories = {
         "Overdue PTP": 0,
         "Today's PTP": 0,
@@ -33,6 +36,7 @@ def filter_options(db: Session):
         "No PTP": 0
     }
 
+    # FIXED: Calculate PTP categories based on ptp_date
     for ptp_date in raw_dates:
         if hasattr(ptp_date, 'date'):
             ptp_date = ptp_date.date()
@@ -45,7 +49,8 @@ def filter_options(db: Session):
         elif ptp_date > tomorrow:
             ptp_categories["Future PTP"] += 1
 
-    no_ptp_count = db.query(PaymentDetails).filter(PaymentDetails.payment_date == None).count()
+    # FIXED: Count records with no PTP date (ptp_date is NULL)
+    no_ptp_count = db.query(PaymentDetails).filter(PaymentDetails.ptp_date.is_(None)).count()
     ptp_categories["No PTP"] = no_ptp_count
 
     
@@ -67,7 +72,8 @@ def filter_options(db: Session):
         "dealers": dealers,
         "lenders": lenders,
         "statuses": statuses,
-        "ptpDateOptions": list(ptp_categories.keys()), 
+        # FIXED: Return PTP filter values that match API expectations
+        "ptpDateOptions": ["overdue", "today", "tomorrow", "future", "no_ptp"], 
         "vehicle_statuses": vehicle_statuses,
         "team_leads": team_leads,
         "rms": rms,

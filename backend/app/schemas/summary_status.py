@@ -15,11 +15,10 @@ class SummaryStatusRequest(BaseModel):
 
 class SummaryStatusResponse(BaseModel):
     total: int
-    paid: int
-    unpaid: int
+    future: int
+    overdue: int
     partially_paid: int
-    cash_collected: int
-    customer_deposited: int
-    paid_pending_approval: int
+    paid: int
     foreclose: int
-    paid_rejected: int  # 🎯 ADDED! New status 
+    paid_pending_approval: int
+    paid_rejected: int 

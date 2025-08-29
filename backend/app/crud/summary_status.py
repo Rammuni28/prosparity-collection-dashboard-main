@@ -105,27 +105,27 @@ def get_summary_status_with_filters(
         .all()
     )
     
-    # Updated status mapping for new status names
-    status_map = {
-        'Paid': 'paid',
-        'Partially Paid': 'partially_paid', 
-        'Future': 'unpaid',
-        'Overdue': 'unpaid',
-        'Foreclose': 'foreclose',
-        'Paid(Pending Approval)': 'paid_pending_approval',  # 🎯 UPDATED! New status name
-        'Paid Rejected': 'paid_rejected'  # 🎯 ADDED! New status
-    }
-    
+    # Fixed summary with exact fields as per schema
     summary = {
         'total': 0,
-        'paid': 0,
-        'unpaid': 0,
+        'future': 0,
+        'overdue': 0,
         'partially_paid': 0,
-        'cash_collected': 0,
-        'customer_deposited': 0,
-        'paid_pending_approval': 0,
+        'paid': 0,
         'foreclose': 0,
-        'paid_rejected': 0  # 🎯 ADDED! New status
+        'paid_pending_approval': 0,
+        'paid_rejected': 0
+    }
+    
+    # Status mapping to exact fields
+    status_map = {
+        'Future': 'future',
+        'Overdue': 'overdue',
+        'Partially Paid': 'partially_paid',
+        'Paid': 'paid',
+        'Foreclose': 'foreclose',
+        'Paid(Pending Approval)': 'paid_pending_approval',
+        'Paid Rejected': 'paid_rejected'
     }
     
     for status_id, count in results:
