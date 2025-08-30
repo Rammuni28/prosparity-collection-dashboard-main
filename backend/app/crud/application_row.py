@@ -165,6 +165,9 @@ def get_filtered_applications(
         elif ptp_date_filter == "no_ptp":
             query = query.filter(PaymentDetails.ptp_date.is_(None))
     
+    # 🎯 ADDED! Alphabetical ordering by Applicant Name (First Name, then Last Name)
+    query = query.order_by(ApplicantDetails.first_name.asc(), ApplicantDetails.last_name.asc())
+    
     total = query.count()
     results = []
 
