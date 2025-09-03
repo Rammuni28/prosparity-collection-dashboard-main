@@ -8,6 +8,7 @@ from app.models.contact_calling import ContactCalling
 from app.models.repayment_status import RepaymentStatus
 from app.schemas.status_management import StatusManagementUpdate, CallingTypeEnum
 from app.schemas.contact_types import ContactTypeEnum
+from app.crud.user import get_user_by_id
 
 def update_status_management(
     db: Session, 
@@ -19,7 +20,12 @@ def update_status_management(
     
     # Set user context before any database operations for audit trail
     if user_id:
-        db.execute(text(f"SET @app_user = {user_id}"))
+        # Get user name from user_id
+        user = get_user_by_id(db, user_id)
+        user_name = user.name if user else f"User_{user_id}"
+        # Escape single quotes in user name for SQL
+        escaped_user_name = user_name.replace("'", "''")
+        db.execute(text(f"SET @app_user = '{escaped_user_name}'"))
     
     # Find the payment record for this loan
     if status_data.repayment_id:
