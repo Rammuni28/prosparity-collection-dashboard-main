@@ -94,4 +94,28 @@ def get_user(db: Session, user_id: int) -> Optional[User]:
 # Legacy function for backward compatibility
 def verify_user(db: Session, email: str, password: str) -> Optional[User]:
     """Legacy verify_user function - use authenticate_user instead"""
-    return authenticate_user(db, email, password) 
+    return authenticate_user(db, email, password)
+
+def update_login_time(db: Session, user_id: int) -> bool:
+    """Update user's last login time"""
+    user = get_user_by_id(db, user_id)
+    if not user:
+        return False
+    
+    user.last_login_time = datetime.utcnow()
+    user.updated_at = datetime.utcnow()
+    db.commit()
+    return True
+
+def update_logout_time(db: Session, user_id: int) -> bool:
+    """Update user's last logout time"""
+    user = get_user_by_id(db, user_id)
+    if not user:
+        return False
+    
+    user.last_logout_time = datetime.utcnow()
+    user.updated_at = datetime.utcnow()
+    db.commit()
+    return True
+
+ 

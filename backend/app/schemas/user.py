@@ -39,6 +39,9 @@ class UserResponse(BaseModel):
     mobile: Optional[str] = None
     role: str
     status: Optional[str] = None
+    # 🎯 NEW FIELDS FOR LOGIN/LOGOUT TRACKING
+    last_login_time: Optional[datetime] = None
+    last_logout_time: Optional[datetime] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
