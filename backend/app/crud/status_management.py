@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, func
-from typing import Dict, Any
+from sqlalchemy import and_, func, text
+from typing import Dict, Any, Optional
 from app.models.payment_details import PaymentDetails
 from app.models.loan_details import LoanDetails
 from app.models.calling import Calling
@@ -12,9 +12,14 @@ from app.schemas.contact_types import ContactTypeEnum
 def update_status_management(
     db: Session, 
     loan_id: str, 
-    status_data: StatusManagementUpdate
+    status_data: StatusManagementUpdate,
+    user_id: Optional[int] = None
 ) -> Dict[str, Any]:
     """Update status management for a loan application"""
+    
+    # Set user context before any database operations for audit trail
+    if user_id:
+        db.execute(text(f"SET @app_user = {user_id}"))
     
     # Find the payment record for this loan
     if status_data.repayment_id:

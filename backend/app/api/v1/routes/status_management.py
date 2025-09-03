@@ -37,7 +37,8 @@ def update_application_status(
         result = update_status_management(
             db=db,
             loan_id=loan_id,
-            status_data=status_update
+            status_data=status_update,
+            user_id=current_user["id"]
         )
         
         return result
