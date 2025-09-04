@@ -3,6 +3,7 @@ from sqlalchemy import desc
 from typing import List, Optional
 from app.models.audit_payment_details import AuditPaymentDetails
 from app.models.repayment_status import RepaymentStatus
+from app.models.user import User
 from app.schemas.recent_activity import RecentActivityItem, ActivityTypeEnum
 from datetime import datetime, timedelta
 
@@ -53,7 +54,7 @@ def get_recent_activity(
                     activity_type=ActivityTypeEnum.repayment_status,
                     from_value=old_status,
                     to_value=new_status,
-                    changed_by=audit.changed_by or "System",
+                    changed_by=get_user_name(db, audit.changed_by),
                     timestamp=audit.action_timestamp,
                     loan_id=audit.loan_application_id,
                     repayment_id=audit.payment_id
@@ -69,7 +70,7 @@ def get_recent_activity(
                     activity_type=ActivityTypeEnum.ptp_date,
                     from_value=old_ptp_date,
                     to_value=new_ptp_date,
-                    changed_by=audit.changed_by or "System",
+                    changed_by=get_user_name(db, audit.changed_by),
                     timestamp=audit.action_timestamp,
                     loan_id=audit.loan_application_id,
                     repayment_id=audit.payment_id
@@ -85,7 +86,7 @@ def get_recent_activity(
                     activity_type=ActivityTypeEnum.amount_collected,
                     from_value=str(old_amount) if old_amount else None,
                     to_value=str(new_amount) if new_amount else None,
-                    changed_by=audit.changed_by or "System",
+                    changed_by=get_user_name(db, audit.changed_by),
                     timestamp=audit.action_timestamp,
                     loan_id=audit.loan_application_id,
                     repayment_id=audit.payment_id
@@ -102,5 +103,22 @@ def get_repayment_status_name(db: Session, status_id: Optional[int]) -> Optional
     
     status = db.query(RepaymentStatus).filter(RepaymentStatus.id == status_id).first()
     return status.repayment_status if status else None
+
+def get_user_name(db: Session, changed_by: Optional[str]) -> str:
+    """Get user name by ID or return the changed_by value if it's already a name"""
+    if not changed_by:
+        return "System"
+    
+    # If changed_by is already a name (not a number), return it
+    if not changed_by.isdigit():
+        return changed_by
+    
+    # If changed_by is a number (user ID), look up the user
+    try:
+        user_id = int(changed_by)
+        user = db.query(User).filter(User.id == user_id).first()
+        return user.name if user else f"User_{user_id}"
+    except ValueError:
+        return changed_by
 
 
