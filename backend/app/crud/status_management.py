@@ -19,8 +19,7 @@ def update_status_management(
     
     # Set user context before any database operations for audit trail
     if user_id:
-        # Set the user variable in the same session
-        db.execute(text(f"SET @app_user = '{user_id}'"))
+        db.execute(text(f"SET @app_user = {user_id}"))
     
     # Find the payment record for this loan
     if status_data.repayment_id:
@@ -96,10 +95,6 @@ def update_status_management(
         db.add(calling_record)
         calling_records_created.append("contact_calling")
         updated_fields.append("contact_calling_status")
-    
-    # Set user context again before commit to ensure audit trigger gets it
-    if user_id:
-        db.execute(text(f"SET @app_user = '{user_id}'"))
     
     # Commit all changes
     db.commit()
