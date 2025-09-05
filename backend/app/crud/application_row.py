@@ -41,6 +41,7 @@ def get_filtered_applications(
         PaymentDetails.demand_num.label("demand_num"),  # 🎯 ADDED! Repayment Number
         ApplicantDetails.first_name,
         ApplicantDetails.last_name,
+        ApplicantDetails.mobile,
         PaymentDetails.demand_amount.label("emi_amount"),
         RepaymentStatus.repayment_status.label("status"),
         PaymentDetails.demand_date.label('emi_month'),
@@ -240,6 +241,7 @@ def get_filtered_applications(
             "payment_id": row.payment_id,  # 🎯 ADDED! This is the repayment_id for comments
             "demand_num": str(row.demand_num) if row.demand_num else None,  # 🎯 ADDED! Repayment Number (converted to string)
             "applicant_name": f"{row.first_name or ''} {row.last_name or ''}".strip(),
+            "mobile": str(row.mobile) if row.mobile else None,
             "emi_amount": float(row.emi_amount) if row.emi_amount else None,
             "status": row.status,
             "emi_month": row.emi_month.strftime('%b-%y') if row.emi_month else None,
