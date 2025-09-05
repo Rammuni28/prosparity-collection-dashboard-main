@@ -20,12 +20,16 @@ def update_status_management(
     
     # Set user context before any database operations for audit trail
     if user_id:
+<<<<<<< HEAD:app/crud/status_management.py
         # Get user name from user_id
         user = get_user_by_id(db, user_id)
         user_name = user.name if user else f"User_{user_id}"
         # Escape single quotes in user name for SQL
         escaped_user_name = user_name.replace("'", "''")
         db.execute(text(f"SET @app_user = '{escaped_user_name}'"))
+=======
+        db.execute(text(f"SET @app_user = {user_id}"))
+>>>>>>> d096189553ea2e43fc36a0c203c9c928cfa70e05:backend/app/crud/status_management.py
     
     # Find the payment record for this loan
     if status_data.repayment_id:
